@@ -1,0 +1,15 @@
+func void main() {
+    int x = 10
+    print("y: {}\n", x)    
+}
+
+// IR:
+//.main {
+//    x: int = 10
+//    $0: string = "y: "
+//    $1: string = "\n"
+//    print $0
+//    print x
+//    print $1
+//    halt
+//}

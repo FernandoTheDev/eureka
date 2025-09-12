@@ -1,0 +1,9 @@
+{
+	"authors": [
+		"Fernando Dev"
+	],
+	"copyright": "Copyright © 2025, Fernando Dev",
+	"description": "The Fiber Programming Language",
+	"license": "MIT",
+	"name": "fiber_language"
+}
