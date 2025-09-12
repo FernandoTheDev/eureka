@@ -1,0 +1,16 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/fiber_language
+fiber_language.so
+fiber_language.dylib
+fiber_language.dll
+fiber_language.a
+fiber_language.lib
+fiber_language-test-*
+*.exe
+*.pdb
+*.o
+*.obj
+*.lst
