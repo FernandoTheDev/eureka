@@ -1,13 +1,12 @@
 module frontend.lexer.token;
 
-import std.variant;
-import std.stdio;
-import std.conv;
+import std.variant, std.stdio, std.conv;
 
 enum TokenKind
 {
     // Keywords
     Func, // func
+    Let, // let
     Return, // return
     Int, // int
     Str, // str

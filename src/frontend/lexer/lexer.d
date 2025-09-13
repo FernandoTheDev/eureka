@@ -1,11 +1,6 @@
 module frontend.lexer.lexer;
 
-import std.stdio;
-import std.conv;
-import std.variant;
-import std.ascii;
-import std.format;
-import std.exception;
+import std.stdio, std.conv, std.variant, std.ascii, std.format, std.exception;
 import frontend.lexer.token;
 
 class Lexer
@@ -22,6 +17,7 @@ private:
     void setKeywords()
     {
         keywords["func"] = TokenKind.Func;
+        keywords["let"] = TokenKind.Let;
         keywords["return"] = TokenKind.Return;
         keywords["int"] = TokenKind.Int;
         keywords["str"] = TokenKind.Str;
@@ -143,6 +139,7 @@ public:
             throw new Exception(format("Invalid char '%c'", ch));
         }
 
+        tokens ~= Token(TokenKind.Eof, Variant(null));
         return tokens;
     }
 }
