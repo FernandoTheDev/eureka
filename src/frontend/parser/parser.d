@@ -27,9 +27,19 @@ private:
             return this.parseFuncDecl();
         case TokenKind.Let:
             return this.parseVarDecl();
+        case TokenKind.Return:
+            return this.parseReturn();
         default:
             throw new Exception("Noo prefix parse function for " ~ to!string(token));
         }
+    }
+
+    Return parseReturn()
+    {
+        Node n;
+        if (this.match([TokenKind.SemiColon]))
+            return new Return(n, false);
+        return new Return(this.parseExpression(Precedence.LOWEST));
     }
 
     CallExpr parseCallExpr(string id)
@@ -105,10 +115,21 @@ private:
         }
     }
 
+    BinaryExpr parseBinaryExpr(Node left)
+    {
+        Token op = this.advance();
+        Node right = this.parseExpression(Precedence.LOWEST);
+        return new BinaryExpr(left, right, op.value.get!string);
+    }
+
     void infix(ref Node leftOld)
     {
         switch (this.peek().kind)
         {
+        case TokenKind.Plus:
+        case TokenKind.Minus:
+            leftOld = parseBinaryExpr(leftOld);
+            return;
         default:
             return;
         }
@@ -194,6 +215,12 @@ private:
     {
         switch (kind)
         {
+        case TokenKind.Plus:
+        case TokenKind.Minus:
+            return Precedence.SUM;
+        case TokenKind.Star:
+        case TokenKind.Slash:
+            return Precedence.MUL;
         default:
             return Precedence.LOWEST;
         }
