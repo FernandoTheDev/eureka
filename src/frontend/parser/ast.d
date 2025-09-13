@@ -7,6 +7,7 @@ enum NodeKind
 {
     Program,
     Identifier,
+    Return,
 
     // literal
     StringLiteral,
@@ -17,6 +18,7 @@ enum NodeKind
 
     BinaryExpr,
     CallExpr,
+
 }
 
 abstract class Node
@@ -185,5 +187,49 @@ class CallExpr : Node
         println(format("Arguments (%d): [ ", args.length), ident);
         foreach (Node arg; args)
             arg.print(ident + 4);
+    }
+}
+
+class Return : Node
+{
+    bool ret;
+    this(Node expr, bool ret = true)
+    {
+        this.kind = NodeKind.Return;
+        this.type = expr.type;
+        this.value = expr;
+        this.ret = ret;
+    }
+
+    override void print(ulong ident = 0)
+    {
+        println("» Return", ident);
+        println(format("Type - %s", type), ident);
+        println("Value: ", ident);
+        value.get!Node.print(ident + 4);
+    }
+}
+
+class BinaryExpr : Node
+{
+    Node left, right;
+    string op;
+    this(Node left, Node right, string op)
+    {
+        this.kind = NodeKind.BinaryExpr;
+        this.type = left.type;
+        this.left = left;
+        this.right = right;
+        this.op = op;
+    }
+
+    override void print(ulong ident = 0)
+    {
+        println(format("» BinaryExpr - operator(%s)", op), ident);
+        println(format("Type - %s", type), ident);
+        println("Left: ", ident);
+        left.print(ident + 4);
+        println("Right: ", ident);
+        left.print(ident + 4);
     }
 }

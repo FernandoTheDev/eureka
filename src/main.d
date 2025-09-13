@@ -1,8 +1,9 @@
 module main;
 
-import std.stdio, std.file : exists;
+import std.stdio, std.getopt, std.file : exists;
 import frontend.lexer.token, frontend.lexer.lexer, frontend.parser.ast, frontend.parser.parser;
 import backend.codegen;
+import repl, config, cli;
 
 string getFileSource(string file)
 {
@@ -16,10 +17,33 @@ string getFileSource(string file)
 
 void main(string[] args)
 {
-
 	if (args.length < 2)
 	{
 		writeln("A '.fiber' file is expected as an argument.");
+		return;
+	}
+
+	bool help = false;
+	bool repl = false;
+	bool version_ = false;
+
+	getopt(args, "v|version", &version_, "h|help", &help, "repl", &repl);
+
+	if (version_)
+	{
+		showVersion();
+		return;
+	}
+
+	if (help)
+	{
+		showHelpMessage();
+		return;
+	}
+
+	if (repl)
+	{
+		replMode();
 		return;
 	}
 
@@ -36,11 +60,9 @@ void main(string[] args)
 		string source = getFileSource(file);
 		Lexer lexer = new Lexer(file, source);
 		Token[] tokens = lexer.tokenize();
+		// writeln(tokens);
 
 		Program prog = new Parser(tokens).parse();
-		// writeln(tokens);
-		// prog.print();
-
 		Codegen cg = new Codegen(prog);
 		cg.generate();
 		writeln(cg.ir());

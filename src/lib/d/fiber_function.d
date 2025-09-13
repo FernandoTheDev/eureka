@@ -43,7 +43,7 @@ public:
             code ~= format("fn %s (", name);
             for (long i; i < params.length; i++)
             {
-                code ~= params[i].value;
+                code ~= cast(string) params[i].type ~ " " ~ params[i].value;
                 if (!((i + 1) >= params.length))
                 {
                     code ~= ", ";

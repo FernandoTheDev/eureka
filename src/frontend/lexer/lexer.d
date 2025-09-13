@@ -98,7 +98,6 @@ public:
                 while (offset < source.length && isDigit(source[offset]))
                     n ~= to!string(source[offset++]);
                 tokens ~= Token(TokenKind.Number, Variant(n));
-                offset++;
                 continue;
             }
 

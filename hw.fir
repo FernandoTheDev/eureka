@@ -2,10 +2,12 @@
 // MIT LICENSE - Copyright (c) 2025 Fernando
 
 .main {
-    $0: int = 69
-    $1: string = "Fernando\n"
-    print $1
+    $0: string = "Hello"
     print $0
+    $1: string = " "
+    print $1
+    $2: string = "World!\n"
+    print $2
     halt
 }
 

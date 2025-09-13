@@ -35,28 +35,60 @@ private:
             return genFuncDecl(cast(FunctionDeclaration) node);
         case NodeKind.CallExpr:
             return genCallExpr(cast(CallExpr) node);
+        case NodeKind.BinaryExpr:
+            return genBinaryExpr(cast(BinaryExpr) node);
+        case NodeKind.Return:
+            Return ret = cast(Return) node;
+            return block.ret(this.gen(ret.value.get!Node));
         default:
             throw new Exception(format("Unkown node '%s'.", node.kind));
         }
     }
 
+    FiberValue genBinaryExpr(BinaryExpr node)
+    {
+        FiberValue left = this.gen(node.left);
+        FiberValue right = this.gen(node.right);
+
+        switch (node.op)
+        {
+        case "+":
+            return block.add(FiberType.Int, left, right);
+        default:
+            throw new Exception(format("Unkown operator '%s'", node.op));
+        }
+    }
+
     FiberValue genCallExpr(CallExpr node)
     {
-        if (node.id == "print")
+        FiberValue[] args;
+        foreach (arg; node.args)
         {
-            foreach (arg; node.args)
-            {
-                block.print(this.gen(arg));
-            }
+            args ~= this.gen(arg);
         }
 
-        return Value("\0", "", false, FiberType.Void);
+        // TODO: improve this
+        if (node.id == "print")
+        {
+            for (ulong i; i < args.length; i++)
+                block.print(args[i]);
+            return Value("\0", "", false, FiberType.Void);
+        }
+
+        return block.call(node.id, FiberType.Int, args);
     }
 
     FiberValue genFuncDecl(FunctionDeclaration node)
     {
-        FiberFunction func = new FiberFunction(node.name, cast(FiberType) node.type.baseType, [
-            ], node.name == "main" ? true : false);
+        FiberValue[] args;
+        foreach (FunctionArgument arg; node.args)
+        {
+            args ~= FiberValue(arg.name, "", false, cast(FiberType) arg.type.baseType);
+            this.context[arg.name] = args[$ - 1];
+        }
+
+        FiberFunction func = new FiberFunction(node.name, cast(FiberType) node.type.baseType, args,
+            node.name == "main" ? true : false);
         FiberBlock entry = new FiberBlock(new FiberTempCounter());
         func.setBlock(entry);
         this.block = entry;
