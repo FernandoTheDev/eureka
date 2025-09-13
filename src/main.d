@@ -1,8 +1,8 @@
 module main;
 
-import std.stdio;
-import std.file : exists;
-import frontend.lexer.token, frontend.lexer.lexer;
+import std.stdio, std.file : exists;
+import frontend.lexer.token, frontend.lexer.lexer, frontend.parser.ast, frontend.parser.parser;
+import backend.codegen;
 
 string getFileSource(string file)
 {
@@ -35,7 +35,15 @@ void main(string[] args)
 	{
 		string source = getFileSource(file);
 		Lexer lexer = new Lexer(file, source);
-		writeln(lexer.tokenize());
+		Token[] tokens = lexer.tokenize();
+
+		Program prog = new Parser(tokens).parse();
+		// writeln(tokens);
+		// prog.print();
+
+		Codegen cg = new Codegen(prog);
+		cg.generate();
+		writeln(cg.ir());
 	}
 	catch (Exception e)
 	{

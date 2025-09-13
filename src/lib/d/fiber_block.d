@@ -75,6 +75,12 @@ public:
         return tmpVar;
     }
 
+    Value store(Value x, Value y)
+    {
+        emit(format("store %s, %s", x.value, y.value));
+        return x;
+    }
+
     Value print(Value value)
     {
         emit(format("print %s", value.value));

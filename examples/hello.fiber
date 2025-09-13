@@ -1,15 +1,11 @@
-func void main() {
-    int x = 10
-    print("y: {}\n", x)    
+func void main {
+    let x int = 69
+    let name string = "Fernando\n"
+    print(name)
+    print(x)
 }
 
-// IR:
-//.main {
-//    x: int = 10
-//    $0: string = "y: "
-//    $1: string = "\n"
-//    print $0
-//    print x
-//    print $1
-//    halt
-//}
+// func int sum(x int, y int) {
+//     return x
+// }
+
