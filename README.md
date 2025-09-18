@@ -1,3 +1,3 @@
-# Fiber Language
+# Eureka
 
-Fiber is an interpreted programming language that runs on the Fiber virtual machine
+Eureka is an interpreted programming language
