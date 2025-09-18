@@ -1,7 +1,0 @@
-func void main {
-    print("Result: ", sum(60, 9), "\n")
-}
-
-func int sum(x int, y int) {
-    return x + y
-}

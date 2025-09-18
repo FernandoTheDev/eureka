@@ -3,7 +3,8 @@
 		"Fernando Dev"
 	],
 	"copyright": "Copyright © 2025, Fernando Dev",
-	"description": "The Fiber Programming Language",
+	"description": "The Eureka Programming Language",
 	"license": "MIT",
-	"name": "fiber_language"
+	"name": "eureka",
+	"targetName": "eureka"
 }

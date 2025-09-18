@@ -173,8 +173,7 @@ class CallExpr : Node
     this(string id, Node[] args)
     {
         this.kind = NodeKind.CallExpr;
-        this.type = Type(Types.Undefined, BaseType
-                .Void);
+        this.type = Type(Types.Undefined, BaseType.Void);
         this.value = null;
         this.id = id;
         this.args = args;
