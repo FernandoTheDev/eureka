@@ -1,0 +1,6 @@
+extern func void println(...);
+
+let var str = "17"
+let age int = cast!int(str)
+
+println(typeof(age)) // int

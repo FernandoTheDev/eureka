@@ -1,0 +1,15 @@
+use "array.ek"
+
+let names str[1] = ["Fernando"] // array de strings que só comporta um elemento
+let other mixed[] = ["Fernando", 1, 2.1421f] // array de qualquer tipo com qualquer dimensão
+
+// concatenação naturalmente será '+='
+// se for um array no left então right será validado se necessário e será armazenado no left
+
+names += cast!str(100) // cast explicito = segurança
+other += 10 // sem verificação pois é mixed
+
+// builtin
+// names.pop()
+
+let names_len int = names.length()

@@ -267,7 +267,7 @@ RuntimeValue flush(RuntimeValue[LIMIT] values, size_t argCount)
     return MK_VOID();
 }
 
-RuntimeValue strlen(RuntimeValue[LIMIT] values, size_t argCount)
+RuntimeValue estrlen(RuntimeValue[LIMIT] values, size_t argCount)
 {
     if (argCount != 1 || values[0].type.baseType != BaseType.String)
     {

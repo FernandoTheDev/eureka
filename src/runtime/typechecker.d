@@ -18,12 +18,12 @@ public:
         string rightStr = cast(string) right;
 
         string[][string] map = [
-            "int": ["int", "float", "double", "real"],
-            "double": ["double", "real"],
-            "float": ["float", "double", "real"],
-            "string": ["string"],
-            "bool": ["bool", "int"],
-            "real": ["real"]
+            "int": ["int", "float", "double", "real", "string", "bool"],
+            "double": ["double", "real", "string"],
+            "float": ["float", "double", "real", "string"],
+            "string": ["string", "bool"],
+            "bool": ["bool", "int", "string"],
+            "real": ["real", "string"]
         ];
 
         if (leftStr !in map || !canFind(map[leftStr], rightStr) || rightStr !in map)

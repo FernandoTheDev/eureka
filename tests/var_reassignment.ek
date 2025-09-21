@@ -1,0 +1,14 @@
+let name str = "Fernando"
+name += " the " // valid
+name = name + "Dev" // valid
+
+let i int = 0
+i++ // valid
+i += 1 // valid
+i = i - 1 // valid
+
+// operators:
+// +=
+// -=
+// /=
+// *=

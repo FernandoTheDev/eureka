@@ -229,7 +229,7 @@ public:
                         advance();
                         createToken(TokenKind.Double, Variant(n), n.length + 1);
                     }
-                    else if (suffix == 'r' || suffix == 'R')
+                    else if (suffix == 'L')
                     {
                         advance();
                         createToken(TokenKind.Real, Variant(n), n.length + 1);
