@@ -4,7 +4,7 @@ import std.stdio, std.string, std.array, std.algorithm.searching;
 import frontend.lexer.token, frontend.lexer.lexer, frontend.parser.ast, frontend.parser.parser;
 import frontend.type;
 import runtime.context, runtime.runtime_value, runtime.runtime;
-import config, cli;
+import config, cli, error;
 
 void showHelpRepl()
 {
@@ -29,7 +29,7 @@ void replMode()
     string[] dlopnso;
     string[] buffer;
     string line;
-    EurekaRuntime eureka = new EurekaRuntime(new Context(), dlopnso);
+    EurekaRuntime eureka = new EurekaRuntime(new Context(), dlopnso, new DiagnosticError());
 
     while (true)
     {
@@ -117,7 +117,7 @@ void replMode()
             {
                 dlopnso ~= libName;
                 // Recreate runtime with new libraries
-                eureka = new EurekaRuntime(new Context(), dlopnso);
+                eureka = new EurekaRuntime(new Context(), dlopnso, new DiagnosticError());
                 writefln("Added library: %s", libName);
             }
             continue;
@@ -142,7 +142,7 @@ void replMode()
                 import std.algorithm.mutation : remove;
 
                 dlopnso = dlopnso.remove(index);
-                eureka = new EurekaRuntime(new Context(), dlopnso);
+                eureka = new EurekaRuntime(new Context(), dlopnso, new DiagnosticError());
                 writefln("Removed library: %s", libName);
             }
             continue;
@@ -165,7 +165,7 @@ void replMode()
             try
             {
                 string source = buffer.join("\n");
-                Lexer lexer = new Lexer("repl", source);
+                Lexer lexer = new Lexer("repl", source, ".", new DiagnosticError());
                 Token[] tokens = lexer.tokenize();
                 Program prog = new Parser(tokens).parse();
                 eureka.eval(prog);

@@ -1,0 +1,15 @@
+extern func void eprintf(msg str, ...);
+
+func int fibo(n int, a int, b int) {
+    if n == 0 return a
+    if n == 1 return b
+    return fibo(n - 1, b, a + b)
+}
+
+func void run(n int) {
+    if n == 0 return
+    fibo(100, 0, 1)
+    run(n - 1)
+}
+
+run(10)

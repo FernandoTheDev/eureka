@@ -6,6 +6,9 @@ import frontend.type, frontend.parser.ast;
 union ValueData
 {
     long _int;
+    float _float;
+    double _double;
+    real _real;
     bool _bool;
     string _string;
     FunctionDeclaration _function;
@@ -25,6 +28,27 @@ RuntimeValue MK_INT(long n = 0)
     ValueData value;
     value._int = n;
     return RuntimeValue(Type(Types.Literal, BaseType.Int), value);
+}
+
+RuntimeValue MK_FLOAT(float n = 0.0)
+{
+    ValueData value;
+    value._float = n;
+    return RuntimeValue(Type(Types.Literal, BaseType.Float), value);
+}
+
+RuntimeValue MK_DOUBLE(double n = 0.0)
+{
+    ValueData value;
+    value._double = n;
+    return RuntimeValue(Type(Types.Literal, BaseType.Double), value);
+}
+
+RuntimeValue MK_REAL(real n = 0.0)
+{
+    ValueData value;
+    value._real = n;
+    return RuntimeValue(Type(Types.Literal, BaseType.Real), value);
 }
 
 RuntimeValue MK_STRING(string str = "")

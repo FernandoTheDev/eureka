@@ -1,0 +1,21 @@
+extern func void print(...);
+extern func void toString(...);
+extern func void println(...);
+extern func void eprintf(msg str, ...);
+extern func void put(ch int);
+extern func int strlen(text str);
+extern func str input(text str);
+
+// print("Hello", " ", "World ")
+// println(123, " ", true)
+// println("Hello World")
+// 
+// eprintf("Number: %d\n", 10)
+// eprintf("String: %s, Bool: %b\n", "test", true)
+// eprintf("Escaped: %%d gives %d\n", 42)
+// 
+// put(65)
+// put(10)
+// 
+// // float, double, real
+// eprintf("%f %f %f\n", 3.141592f, 2.79696969, 0.0000000000000171r)

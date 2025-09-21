@@ -1,3 +1,0 @@
-extern func int sum(x int, y int);
-
-sum(60, 9)

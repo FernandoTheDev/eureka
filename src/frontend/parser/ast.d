@@ -1,7 +1,7 @@
 module frontend.parser.ast;
 
 import std.stdio, std.variant, std.format, std.conv, frontend.parser.utils, std.string;
-import frontend.type;
+import frontend.type, frontend.lexer.token : Loc;
 
 enum NodeKind
 {
@@ -13,7 +13,10 @@ enum NodeKind
     // literal
     StringLiteral,
     IntLiteral,
+    DoubleLiteral,
     BoolLiteral,
+    FloatLiteral,
+    RealLiteral,
 
     FuncDeclaration,
     VarDeclaration,
@@ -21,6 +24,9 @@ enum NodeKind
     BinaryExpr,
     CallExpr,
 
+    IfStatement,
+    ElseStatement,
+    UseStatement,
 }
 
 abstract class Node
@@ -28,17 +34,10 @@ abstract class Node
     NodeKind kind;
     Variant value;
     Type type;
+    Loc loc;
 
     void print(ulong ident = 0, bool isLast = false);
 }
-
-/*
-├── Program
-│   ├── Body
-│   │   ├── FunctionDeclaration
-│   │   └── ...
-│   └── Type: int
-*/
 
 class Program : Node
 {
@@ -49,6 +48,7 @@ class Program : Node
         this.type = Type(Types.Literal, BaseType.Int);
         this.value = null;
         this.body = body;
+        this.loc = loc;
     }
 
     override void print(ulong ident = 0, bool isLast = false)
@@ -60,7 +60,7 @@ class Program : Node
         {
             if (i == cast(uint)
                 body.length - 1)
-                node.print(ident + 8, true); // último item
+                node.print(ident + 8, true); // last
             else
                 node.print(ident + 8, false);
         }
@@ -73,6 +73,7 @@ struct FunctionArgument
     Type type;
     Variant value;
     bool defaultValue;
+    Loc loc;
 }
 
 class FunctionDeclaration : Node
@@ -80,7 +81,7 @@ class FunctionDeclaration : Node
     string name;
     Node[] body;
     FunctionArgument[] args;
-    this(string name, ref FunctionArgument[] args, Node[] body, Type type)
+    this(string name, ref FunctionArgument[] args, Node[] body, Type type, Loc loc)
     {
         this.kind = NodeKind.FuncDeclaration;
         this.type = type;
@@ -88,6 +89,7 @@ class FunctionDeclaration : Node
         this.body = body;
         this.name = name;
         this.args = args;
+        this.loc = loc;
     }
 
     override void print(ulong ident = 0, bool isLast = false)
@@ -123,11 +125,12 @@ class FunctionDeclaration : Node
 
 class Identifier : Node
 {
-    this(string id)
+    this(string id, Loc loc)
     {
         this.kind = NodeKind.Identifier;
         this.type = Type(Types.Undefined, BaseType.Void);
         this.value = id;
+        this.loc = loc;
     }
 
     override void print(ulong ident = 0, bool isLast = false)
@@ -143,12 +146,13 @@ class Identifier : Node
 class VarDeclaration : Node
 {
     string id;
-    this(string id, Type type, Node value)
+    this(string id, Type type, Node value, Loc loc)
     {
         this.kind = NodeKind.VarDeclaration;
         this.id = id;
         this.type = type;
         this.value = value;
+        this.loc = loc;
     }
 
     override void print(ulong ident = 0, bool isLast = false)
@@ -165,11 +169,12 @@ class VarDeclaration : Node
 
 class BoolLiteral : Node
 {
-    this(bool n)
+    this(bool n, Loc loc)
     {
         this.kind = NodeKind.BoolLiteral;
         this.type = Type(Types.Literal, BaseType.Bool);
         this.value = n;
+        this.loc = loc;
     }
 
     override void print(ulong ident = 0, bool isLast = false)
@@ -182,13 +187,74 @@ class BoolLiteral : Node
     }
 }
 
+class RealLiteral : Node
+{
+    this(real n, Loc loc)
+    {
+        this.kind = NodeKind.RealLiteral;
+        this.type = Type(Types.Literal, BaseType.Real);
+        this.value = n;
+        this.loc = loc;
+    }
+
+    override void print(ulong ident = 0, bool isLast = false)
+    {
+        string prefix = isLast ? "└── " : "├── ";
+        string continuation = isLast ? "    " : "│   ";
+
+        println(prefix ~ "RealLiteral: " ~ to!string(value.get!double), ident);
+        println(continuation ~ "└── Type: " ~ cast(string) type.baseType, ident);
+    }
+}
+
+class DoubleLiteral : Node
+{
+    this(double n, Loc loc)
+    {
+        this.kind = NodeKind.DoubleLiteral;
+        this.type = Type(Types.Literal, BaseType.Double);
+        this.value = n;
+        this.loc = loc;
+    }
+
+    override void print(ulong ident = 0, bool isLast = false)
+    {
+        string prefix = isLast ? "└── " : "├── ";
+        string continuation = isLast ? "    " : "│   ";
+
+        println(prefix ~ "DoubleLiteral: " ~ to!string(value.get!double), ident);
+        println(continuation ~ "└── Type: " ~ cast(string) type.baseType, ident);
+    }
+}
+
+class FloatLiteral : Node
+{
+    this(float n, Loc loc)
+    {
+        this.kind = NodeKind.FloatLiteral;
+        this.type = Type(Types.Literal, BaseType.Float);
+        this.value = n;
+        this.loc = loc;
+    }
+
+    override void print(ulong ident = 0, bool isLast = false)
+    {
+        string prefix = isLast ? "└── " : "├── ";
+        string continuation = isLast ? "    " : "│   ";
+
+        println(prefix ~ "FloatLiteral: " ~ to!string(value.get!float), ident);
+        println(continuation ~ "└── Type: " ~ cast(string) type.baseType, ident);
+    }
+}
+
 class IntLiteral : Node
 {
-    this(long n)
+    this(long n, Loc loc)
     {
         this.kind = NodeKind.IntLiteral;
         this.type = Type(Types.Literal, BaseType.Int);
         this.value = n;
+        this.loc = loc;
     }
 
     override void print(ulong ident = 0, bool isLast = false)
@@ -203,11 +269,12 @@ class IntLiteral : Node
 
 class StringLiteral : Node
 {
-    this(string n)
+    this(string n, Loc loc)
     {
         this.kind = NodeKind.StringLiteral;
         this.type = Type(Types.Literal, BaseType.String);
         this.value = n;
+        this.loc = loc;
     }
 
     override void print(ulong ident = 0, bool isLast = false)
@@ -224,12 +291,13 @@ class CallExpr : Node
 {
     string id;
     Node[] args;
-    this(string id, Node[] args)
+    this(string id, Node[] args, Loc loc)
     {
         this.kind = NodeKind.CallExpr;
         this.type = Type(Types.Undefined, BaseType.Void);
         this.value = null;
         this.id = id;
+        this.loc = loc;
         this.args = args;
     }
 
@@ -255,11 +323,12 @@ class CallExpr : Node
 class Return : Node
 {
     bool ret;
-    this(Node expr, bool ret = true)
+    this(Node expr, bool ret = true, Loc loc)
     {
         this.kind = NodeKind.Return;
         this.type = expr ? expr.type : Type.init;
         this.value = expr;
+        this.loc = loc;
         this.ret = ret;
     }
 
@@ -283,11 +352,12 @@ class BinaryExpr : Node
 {
     Node left, right;
     string op;
-    this(Node left, Node right, string op)
+    this(Node left, Node right, string op, Loc loc)
     {
         this.kind = NodeKind.BinaryExpr;
         this.type = left.type;
         this.left = left;
+        this.loc = loc;
         this.right = right;
         this.op = op;
     }
@@ -317,10 +387,11 @@ class BinaryExpr : Node
 
 class Extern : Node
 {
-    this(FunctionDeclaration expr)
+    this(FunctionDeclaration expr, Loc loc)
     {
         this.kind = NodeKind.Extern;
         this.type = expr ? expr.type : Type.init;
+        this.loc = loc;
         this.value = expr;
     }
 
@@ -333,5 +404,102 @@ class Extern : Node
         println(continuation ~ "├── Type: " ~ cast(string) type.baseType, ident);
         println(continuation ~ "└── Expression:", ident);
         value.get!Node.print(ident + continuation.length + 4, true);
+    }
+}
+
+class IfStatement : Node
+{
+    Node condition;
+    Node[] body;
+    Node else_;
+    this(Node condition, Node[] body, Type type, Node else_ = null, Loc loc)
+    {
+        this.kind = NodeKind.IfStatement;
+        this.type = type;
+        this.value = null;
+        this.condition = condition;
+        this.body = body;
+        this.loc = loc;
+        this.else_ = else_;
+    }
+
+    override void print(ulong ident = 0, bool isLast = false)
+    {
+        string prefix = isLast ? "└── " : "├── ";
+        string continuation = isLast ? "    " : "│   ";
+
+        println(prefix ~ "IfStatement", ident);
+        println(continuation ~ "├── Type: " ~ cast(string) type.baseType, ident);
+        println(continuation ~ "├── Condition:", ident);
+
+        if (condition !is null)
+            condition.print(ident + continuation.length + 4, false);
+        else
+            println(continuation ~ "│   └── (null)", ident);
+
+        println(continuation ~ "└── Body (" ~ to!string(body.length) ~ " statements):", ident);
+        foreach (size_t i, Node node; body)
+        {
+            if (i == cast(uint)
+                body.length - 1)
+                node.print(ident + continuation.length + 4, else_ !is null);
+            else
+                node.print(ident + continuation.length + 4, false);
+        }
+
+        if (else_ !is null)
+        {
+            println(continuation ~ "└── Else:", ident);
+            else_.print(ident + continuation.length + 4, true);
+        }
+    }
+}
+
+class ElseStatement : Node
+{
+    Node[] body;
+    this(Node[] body = [], Type type, Loc loc)
+    {
+        this.kind = NodeKind.ElseStatement;
+        this.type = type;
+        this.value = null;
+        this.loc = loc;
+        this.body = body;
+    }
+
+    override void print(ulong ident = 0, bool isLast = false)
+    {
+        string prefix = isLast ? "└── " : "├── ";
+        string continuation = isLast ? "    " : "│   ";
+
+        println(prefix ~ "ElseStatement", ident);
+        println(continuation ~ "├── Type: " ~ cast(string) type.baseType, ident);
+
+        println(continuation ~ "└── Body (" ~ to!string(body.length) ~ " statements):", ident);
+        foreach (size_t i, Node node; body)
+            node.print(ident + continuation.length + 4, false);
+    }
+}
+
+class UseStatement : Node
+{
+    bool[string] symbols;
+    this(string file, Loc loc, bool[string] symbols)
+    {
+        this.kind = NodeKind.UseStatement;
+        this.type = Type(Types.Void, BaseType.Void);
+        this.value = file;
+        this.loc = loc;
+        this.symbols = symbols;
+    }
+
+    override void print(ulong ident = 0, bool isLast = false)
+    {
+        string prefix = isLast ? "└── " : "├── ";
+        string continuation = isLast ? "    " : "│   ";
+
+        println(prefix ~ "UseStatement", ident);
+        println(continuation ~ "├── Type: " ~ cast(string) type.baseType, ident);
+        println(continuation ~ "├── Value: " ~ value.get!string, ident);
     }
 }

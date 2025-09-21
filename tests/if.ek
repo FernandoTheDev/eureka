@@ -1,0 +1,17 @@
+extern func void eprintf(msg str, ...);
+extern func void print(...);
+extern func void println(...);
+extern func int toInt(...);
+extern func str input(msg str);
+
+let x int = toInt(input("x: "))
+let y int = toInt(input("y: "))
+
+if x == y
+    eprintf("equals\n")
+else if x > y
+    eprintf("well well well\n")
+else {
+    print("holy")
+    println("shit")
+}

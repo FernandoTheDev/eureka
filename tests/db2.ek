@@ -1,0 +1,32 @@
+extern func int sqliteOpen(filename str);
+extern func void sqliteClose(db int);
+extern func void sqliteExec(db int, sql str);
+extern func str sqliteQuerySingle(db int, sql str);
+extern func str sqliteQueryAll(db int, sql str);
+extern func void sqlitePrepare(db int, sql str, variadic);
+extern func int sqliteLastInsertId(db int);
+extern func int sqliteChanges(db int);
+extern func str sqliteVersion();
+extern func void print(variadic);
+extern func void println(variadic);
+extern func void eprintf(msg str, variadic);
+extern func str toString(variadic);
+
+func void createDB() {
+    let db int = sqliteOpen(":memory:")
+    sqliteExec(db, "PRAGMA synchronous = OFF;")
+    sqliteExec(db, "PRAGMA journal_mode = MEMORY;")
+    sqliteExec(db, "CREATE TABLE IF NOT EXISTS products ( id INTEGER PRIMARY KEY, name TEXT NOT NULL, price REAL, category TEXT )")
+    sqliteExec(db, "CREATE TABLE IF NOT EXISTS sales ( id INTEGER PRIMARY KEY, produto_id INTEGER, quantidade INTEGER, data TEXT )")
+    sqlitePrepare(db, "INSERT INTO products (name, price, category) VALUES (?, ?, ?)", "Notebook", 2500, "Eletronics")
+    sqlitePrepare(db, "INSERT INTO products (name, price, category) VALUES (?, ?, ?)", "Mouse", 50, "Eletronics")
+    sqlitePrepare(db, "INSERT INTO products (name, price, category) VALUES (?, ?, ?)", "Teclado", 150, "Eletronics")
+    sqlitePrepare(db, "INSERT INTO sales (produto_id, quantidade, data) VALUES (?, ?, ?)", 1, 2, "2024-01-15")
+    sqlitePrepare(db, "INSERT INTO sales (produto_id, quantidade, data) VALUES (?, ?, ?)", 2, 5, "2024-01-16")
+    let products str = toString(sqliteQuerySingle(db, "SELECT id, name FROM products ORDER BY category, name"))
+    println(products)
+    let sales str = toString(sqliteQuerySingle(db, "SELECT p.name, v.quantidade, v.data FROM sales v JOIN products p ON v.produto_id = p.id ORDER BY v.data"))
+    println(sales)
+    sqliteClose(db)
+}
+createDB()

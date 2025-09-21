@@ -1,0 +1,4 @@
+use "io.ek" : { eprintf, input }
+
+let name str = input("Name: ")
+eprintf("Hello %s\n", name)

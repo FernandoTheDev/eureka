@@ -1,8 +1,0 @@
-func int sum(x int, y int) {
-    x + y
-}
-
-let name str = "Fernando " + "Dev"
-let result int = 3 * 3 + 20 + 20 + 40 - 20
-let _sum1 int = sum(2, 3)
-let sum2 int = sum(1, 2)

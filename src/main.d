@@ -4,7 +4,23 @@ import std.stdio, std.path, std.getopt, std.file : exists;
 import frontend.lexer.token, frontend.lexer.lexer, frontend.parser.ast, frontend
 	.parser.parser, frontend.type;
 import runtime.context, runtime.runtime_value, runtime.runtime;
-import repl, config, cli;
+import repl, config, cli, error;
+
+string extractDir(string path)
+{
+	string dir = dirName(path);
+	return dir == "." || dir == "" ? "." : dir;
+}
+
+bool checkErrors(DiagnosticError error)
+{
+	if (error.hasErrors() || error.hasWarnings())
+	{
+		error.printDiagnostics();
+		return error.hasErrors();
+	}
+	return false;
+}
 
 void main(string[] args)
 {
@@ -14,7 +30,6 @@ void main(string[] args)
 		return;
 	}
 
-	string output = "";
 	string[] dlopnso;
 	bool help = false;
 	bool repl = false;
@@ -32,7 +47,6 @@ void main(string[] args)
 		"repl", &repl,
 		"tokens", &tokens_,
 		"ast", &ast,
-		"o|output", &output,
 		"L", &dlopnso,
 	);
 
@@ -55,8 +69,6 @@ void main(string[] args)
 	}
 
 	string file = args[1];
-	if (output == "")
-		output = file;
 
 	if (!exists(file))
 	{
@@ -64,23 +76,34 @@ void main(string[] args)
 		return;
 	}
 
+	DiagnosticError error = new DiagnosticError();
+
 	try
 	{
 		string source = getFileSource(file);
-		Lexer lexer = new Lexer(file, source);
+		Lexer lexer = new Lexer(file, source, extractDir(file), error);
 		Token[] tokens = lexer.tokenize();
 
 		if (tokens_)
 			writeln(tokens);
+
+		if (checkErrors(error))
+			return;
 
 		Program prog = new Parser(tokens).parse();
 
 		if (ast)
 			prog.print();
 
+		if (checkErrors(error))
+			return;
+
 		Context context = new Context();
-		EurekaRuntime eureka = new EurekaRuntime(context, dlopnso);
+		EurekaRuntime eureka = new EurekaRuntime(context, dlopnso, error);
 		eureka.eval(prog);
+
+		if (checkErrors(error))
+			return;
 
 		if (stat)
 			eureka.printCacheStats();
@@ -93,17 +116,28 @@ void main(string[] args)
 				writeln("# New Context");
 				foreach (string id, RuntimeValue cnt; value)
 				{
-					write(id, " = ");
+					writef("%s: %s = ", id, cast(string) cnt.type.baseType);
 					if (cnt.type.baseType == BaseType.Int)
 						writeln(cnt.value._int);
 					if (cnt.type.baseType == BaseType.String)
 						writeln(cnt.value._string);
+					if (cnt.type.baseType == BaseType.Float)
+						writefln("%.6f", cnt.value._float);
+					if (cnt.type.baseType == BaseType.Double)
+						writefln("%.20f", cnt.value._double);
+					if (cnt.type.baseType == BaseType.Real)
+						writefln("%.20f", cnt.value._real);
+					if (cnt.type.baseType == BaseType.Bool)
+						writeln(cnt.value._bool ? "true" : "false");
 				}
 			}
 		}
 	}
 	catch (Exception e)
 	{
-		writeln("ERRO: ", e);
+		if (checkErrors(error))
+			return;
+		else
+			writeln("ERRO: ", e);
 	}
 }

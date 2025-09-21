@@ -1,5 +1,0 @@
-extern func str input(text str);
-extern func str eprintf(text str, variadic);
-
-let name str = input("Name: ")
-eprintf("Welcome %s!\n", name)
