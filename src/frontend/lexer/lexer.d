@@ -20,8 +20,13 @@ private:
         keywords["let"] = TokenKind.Let;
         keywords["return"] = TokenKind.Return;
         keywords["int"] = TokenKind.Int;
+        keywords["bool"] = TokenKind.Bool;
         keywords["str"] = TokenKind.Str;
         keywords["void"] = TokenKind.Void;
+        keywords["extern"] = TokenKind.Extern;
+        keywords["variadic"] = TokenKind.Variadic;
+        keywords["true"] = TokenKind.True;
+        keywords["false"] = TokenKind.False;
     }
 
     void setSymbols()
@@ -79,12 +84,12 @@ public:
                 continue;
             }
 
-            if (isAlpha(ch))
+            if (isAlpha(ch) || ch == '_')
             {
                 string id;
-                while (offset < source.length && (isAlpha(source[offset]) || source[offset] == '_'))
+                while (offset < source.length && (isAlpha(source[offset]) || source[offset] == '_' || isDigit(
+                        source[offset])))
                     id ~= to!string(source[offset++]);
-
                 if (id in keywords)
                     tokens ~= Token(keywords[id], Variant(id));
                 else

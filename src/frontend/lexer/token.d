@@ -9,8 +9,13 @@ enum TokenKind
     Let, // let
     Return, // return
     Int, // int
+    Bool, // bool
     Str, // str
     Void, // void
+    Extern, // extern
+    Variadic, // variadic
+    True, // true
+    False, // false
 
     Identifier, // ID
     Number, // 0-9
