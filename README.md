@@ -23,8 +23,7 @@ dub build
 ### Hello World
 
 ```rust
-// variadic = ...
-extern func void eprintln(msg str, variadic);
+extern func void eprintln(msg str, ...);
 eprintln("Hello, World!")
 ```
 
@@ -42,6 +41,9 @@ Run with:
 let name str = "Fernando"
 let age int = 17
 let active bool = true
+let pi_1 float = 3.141592f
+let pi_2 double = 3.141592 // or 3.141592d
+let pi_3 real = 3.141592r
 ```
 
 ### Functions
@@ -54,12 +56,34 @@ func int sum(x int, y int) {
 let result int = sum(10, 20)
 ```
 
+### If/Else
+
+```rust
+extern func void print(...);
+extern func void println(...);
+extern func int toInt(...);
+extern func str input(msg str);
+
+let x int = toInt(input("x: "))
+let y int = toInt(input("y: "))
+
+if x == y
+    println("equals")
+else if x > y
+    println("well well well")
+else {
+    print("holy")
+    println("shit")
+}
+
+```
+
 ### FFI (Foreign Function Interface)
 
 Eureka supports direct calls to C libraries:
 
 ```rust
-extern func void eprintf(format str, variadic);
+extern func void eprintf(format str, ...);
 extern func str input(prompt str);
 
 let name str = input("Enter your name: ")
@@ -69,7 +93,7 @@ eprintf("Hello, %s!\n", name)
 ### String Operations
 
 ```rust
-extern func void eprintf(format str, variadic);
+extern func void eprintf(format str, ...);
 
 let first str = "Hello"
 let second str = "World"
@@ -84,7 +108,7 @@ The built-in standard library provides essential functions:
 - `print()`, `println()`, `eprintf()` - Output functions
 - `input()` - Interactive input
 - `toString()`, `toInt()`, `toBool()` - Type conversions
-- `getStringLength()` - String utilities
+- `strlen()` - String utilities
 
 ## Command Line Usage
 
@@ -108,8 +132,8 @@ The built-in standard library provides essential functions:
 
 ```rust
 extern func str input(prompt str);
-extern func int toInt(variadic);
-extern func void eprintf(format str, variadic);
+extern func int toInt(...);
+extern func void eprintf(format str, ...);
 
 let name str = input("Name: ")
 let age int = toInt(input("Age: "))

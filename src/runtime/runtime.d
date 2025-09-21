@@ -1,8 +1,8 @@
 module runtime.runtime;
 
-import std.stdio, std.format, std.conv, core.sys.posix.dlfcn, std.string;
+import std.stdio, std.format, std.conv, core.sys.posix.dlfcn, std.string, std.file;
 import runtime.runtime_value, runtime.context, runtime.typechecker, config : LIMIT;
-import frontend.parser.ast, frontend.type;
+import frontend.parser.ast, frontend.type, error;
 
 struct LibraryHandle
 {
@@ -24,6 +24,7 @@ private:
     Context context;
     TypeChecker typeChecker;
     string[] dlsopnso;
+    DiagnosticError error;
 
     LibraryHandle[string] libraryCache; // path -> handle
     CachedFunction[string] functionCache; // funcName -> function info
@@ -31,11 +32,12 @@ private:
     alias ExternFunc = RuntimeValue function(RuntimeValue[LIMIT], ulong);
 
 public:
-    this(Context context, string[] dlsopnso = [])
+    this(Context context, string[] dlsopnso = [], DiagnosticError error)
     {
         this.context = context;
         this.typeChecker = new TypeChecker();
         this.dlsopnso = dlsopnso;
+        this.error = error;
 
         // Preload all libraries in constructor
         this.preloadLibraries();
@@ -135,6 +137,15 @@ public:
         case NodeKind.IntLiteral:
             return MK_INT(node.value.get!long);
 
+        case NodeKind.DoubleLiteral:
+            return MK_DOUBLE(node.value.get!double);
+
+        case NodeKind.RealLiteral:
+            return MK_REAL(node.value.get!real);
+
+        case NodeKind.FloatLiteral:
+            return MK_FLOAT(node.value.get!float);
+
         case NodeKind.StringLiteral:
             return MK_STRING(node.value.get!string);
 
@@ -142,7 +153,11 @@ public:
             Identifier id = cast(Identifier) node;
             string varName = id.value.get!string;
             if (!this.context.checkRuntimeValue(varName))
+            {
+                error.addError(Diagnostic(format("Variable '%s' was not declared.", varName), id
+                        .loc));
                 throw new Exception(format("Variable '%s' was not declared.", varName));
+            }
             return this.context.lookupRuntimeValue(varName);
 
         case NodeKind.VarDeclaration:
@@ -150,8 +165,12 @@ public:
             value = this.eval(var.value.get!Node);
 
             if (!typeChecker.isComp(var.type, value.type))
+            {
+                error.addError(Diagnostic(format("Incompatible type: expected '%s', received '%s'.",
+                        cast(string) var.type.baseType, cast(string) value.type.baseType), var.loc));
                 throw new Exception(format("Incompatible type: expected '%s', received '%s'.",
                         cast(string) var.type.baseType, cast(string) value.type.baseType));
+            }
 
             this.context.addRuntimeValue(var.id, value);
             return value;
@@ -185,15 +204,18 @@ public:
             value.haveReturn = true;
             return value;
 
+        case NodeKind.IfStatement:
+            IfStatement ifStatement = cast(IfStatement) node;
+            return this.evalIfStatement(ifStatement);
+
+        case NodeKind.UseStatement:
+            UseStatement useStatement = cast(UseStatement) node;
+            return this.evalUseStatement(useStatement);
+
         case NodeKind.Program:
             Program prog = cast(Program) node;
             foreach (Node n; prog.body)
-            {
                 value = this.eval(n);
-                // If found a return, stop execution
-                if (value.haveReturn)
-                    return value;
-            }
             return value;
 
         default:
@@ -213,6 +235,96 @@ public:
     }
 
 private:
+    RuntimeValue evalUseStatement(UseStatement node)
+    {
+        import std.path : buildPath;
+        import std.file : readText, exists;
+        import std.format : format;
+
+        string file = buildPath(node.loc.dir, node.value.get!string);
+
+        if (!exists(file))
+        {
+            error.addError(Diagnostic(format("File does not exists '%s'.", file), node.loc));
+            throw new Exception(format("File does not exists '%s'.", file));
+        }
+
+        string fileContent = readText(file);
+
+        import frontend.lexer.lexer, frontend.lexer.token, frontend.parser.parser;
+
+        Lexer lexer = new Lexer(file, fileContent, ".", new DiagnosticError());
+        Token[] tokens = lexer.tokenize();
+        Program prog = new Parser(tokens).parse();
+
+        foreach (Node n; prog.body)
+        {
+            if (n.kind != NodeKind.FuncDeclaration && n.kind != NodeKind.Extern && n.kind != NodeKind
+                .UseStatement)
+                continue;
+
+            if (node.symbols.length == 0)
+            {
+                this.eval(n);
+                continue;
+            }
+
+            string symbolName = getNodeSymbolName(n);
+            if (symbolName !is null && symbolName in node.symbols)
+                this.eval(n);
+        }
+
+        return MK_VOID();
+    }
+
+    string getNodeSymbolName(Node n)
+    {
+        if (n.kind == NodeKind.FuncDeclaration)
+            return (cast(FunctionDeclaration) n).name;
+
+        if (n.kind == NodeKind.Extern)
+            return (cast(Extern) n).value.get!FunctionDeclaration.name;
+
+        return null;
+    }
+
+    RuntimeValue evalIfStatement(IfStatement node)
+    {
+        RuntimeValue if_ = MK_VOID();
+        RuntimeValue condition = this.eval(node.condition);
+
+        if (condition.type.baseType != BaseType.Bool)
+            throw new Exception("The condition of the ifStatement must be of type 'bool'.");
+
+        if (condition.value._bool)
+        {
+            foreach (Node n; node.body)
+            {
+                RuntimeValue val = this.eval(n);
+                if (val.haveReturn)
+                {
+                    return val;
+                }
+            }
+        }
+        else if (node.else_ !is null)
+        {
+            if (node.else_.kind == NodeKind.IfStatement)
+                return this.evalIfStatement(cast(IfStatement) node.else_);
+            ElseStatement else_ = cast(ElseStatement) node.else_;
+            foreach (Node n; else_.body)
+            {
+                RuntimeValue val = this.eval(n);
+                if (val.haveReturn)
+                {
+                    return val;
+                }
+            }
+        }
+
+        return if_;
+    }
+
     RuntimeValue evalBinaryExpr(RuntimeValue left, RuntimeValue right, string op)
     {
         Type resultType = typeChecker.inferType(left.type, right.type);
@@ -313,7 +425,11 @@ private:
     RuntimeValue evalCallExpr(CallExpr callExpr)
     {
         if (!this.context.checkRuntimeValue(callExpr.id, true))
+        {
+            error.addError(Diagnostic(format("Function '%s' was not declared.", callExpr.id), callExpr
+                    .loc));
             throw new Exception(format("Function '%s' was not declared.", callExpr.id));
+        }
 
         RuntimeValue funcValue = this.context.lookupRuntimeValue(callExpr.id, true);
         FunctionDeclaration funcDecl = funcValue.value._function;
@@ -359,6 +475,8 @@ private:
             if (!func)
                 throw new Exception(format("Error: External function '%s' not found in any loaded library.", funcDecl
                         .name));
+            // writefln("Calling function: %s with %d args", callExpr.id, callExpr.args.length);
+            // writeln(callExpr.args);
             return func(args, cast(ulong) callExpr.args.length);
         }
 
@@ -385,7 +503,8 @@ private:
         }
         finally
         {
-            this.context.previousContext();
+            // this.context.previousContext();
+            this.context.popContext();
         }
     }
 

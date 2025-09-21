@@ -8,12 +8,25 @@ enum TokenKind
     Func, // func
     Let, // let
     Return, // return
+    Extern, // extern
+    Variadic, // variadic, ...
+    For, // for
+    While, // while
+    Do, // do {} while (1 == 1)
+    If, // if
+    Else, // else
+    Break, // break
+    Continue, // continue
+    Use, // use
+
+    // types
+    Double, // double
+    Real, // real
+    Float, // float
     Int, // int
     Bool, // bool
     Str, // str
     Void, // void
-    Extern, // extern
-    Variadic, // variadic
     True, // true
     False, // false
 
@@ -36,6 +49,15 @@ enum TokenKind
     Colon, // :
     SemiColon, // ;
     Equals, // =
+    Dot, // .
+    Range, // ..
+
+    GreaterThan, // >
+    GreaterThanEquals, // >=
+    LessThan, // <
+    LessThanEquals, // <=
+
+    EqualsEquals, // ==
 
     Eof // EndOfFile
 }
@@ -44,10 +66,20 @@ struct Token
 {
     TokenKind kind;
     Variant value; // raw
+    Loc loc;
 
     void print()
     {
         writeln("TokenKind: ", to!string(kind));
         writeln("TokenValue: ", to!string(value));
     }
+}
+
+struct Loc
+{
+    string filename;
+    string dir;
+    ulong line;
+    ulong start; // in lineOffset
+    ulong end; // in lineOffset
 }

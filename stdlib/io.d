@@ -16,10 +16,16 @@ RuntimeValue print(RuntimeValue[LIMIT] values, size_t argCount)
             c_printf("%s", value.value._bool ? "true".toStringz() : "false".toStringz());
         else if (value.type.baseType == BaseType.Int)
             c_printf("%lld", value.value._int);
+        else if (value.type.baseType == BaseType.Float)
+            c_printf("%f", value.value._float);
+        else if (value.type.baseType == BaseType.Double)
+            c_printf("%.14f", value.value._double);
+        else if (value.type.baseType == BaseType.Real)
+            c_printf("%.18Lg", value.value._real);
         else if (value.type.baseType == BaseType.String)
             c_printf("%s", value.value._string.toStringz());
         else
-            c_printf("Unknown type");
+            c_printf("Unknown type '%s'.", cast(const char*) value.type.baseType);
     }
     return MK_VOID();
 }
@@ -73,6 +79,20 @@ RuntimeValue eprintf(RuntimeValue[LIMIT] values, size_t argCount)
                     throw new Exception("Not enough arguments for format specifiers");
                 }
                 c_printf("%lld", values[argI].value._int);
+                argI++;
+                break;
+
+            case 'f':
+                if (argI >= argCount)
+                {
+                    throw new Exception("Not enough arguments for format specifiers");
+                }
+                if (values[argI].type.baseType == BaseType.Float)
+                    c_printf("%f", values[argI].value._float);
+                else if (values[argI].type.baseType == BaseType.Double)
+                    c_printf("%f", values[argI].value._double);
+                else if (values[argI].type.baseType == BaseType.Real)
+                    c_printf("%Lg", values[argI].value._real);
                 argI++;
                 break;
 
@@ -247,7 +267,7 @@ RuntimeValue flush(RuntimeValue[LIMIT] values, size_t argCount)
     return MK_VOID();
 }
 
-RuntimeValue getStringLength(RuntimeValue[LIMIT] values, size_t argCount)
+RuntimeValue strlen(RuntimeValue[LIMIT] values, size_t argCount)
 {
     if (argCount != 1 || values[0].type.baseType != BaseType.String)
     {

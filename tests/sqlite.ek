@@ -1,0 +1,49 @@
+extern func int sqliteOpen(filename str);
+extern func void sqliteClose(db int);
+extern func bool sqliteIsOpen(db int);
+extern func str sqliteVersion();
+extern func str sqliteGetLastError(db int);
+extern func void sqliteExec(db int, sql str);
+extern func int sqliteChanges(db int);
+extern func int sqliteLastInsertId(db int);
+extern func str sqliteQuerySingle(db int, sql str);
+extern func str sqliteQueryAll(db int, sql str);
+extern func str sqliteQueryColumn(db int, sql str, column int);
+extern func int sqliteCount(db int, sql str);
+extern func void sqlitePrepare(db int, sql str, variadic);
+extern func void sqliteInsert(db int, table str, variadic);
+extern func void sqliteBeginTransaction(db int);
+extern func void sqliteCommit(db int);
+extern func void sqliteRollback(db int);
+extern func bool sqliteTableExists(db int, tableName str);
+extern func str sqliteListTables(db int);
+extern func str sqliteDescribeTable(db int, tableName str);
+extern func str sqliteGetTableSchema(db int, tableName str);
+extern func void sqliteCreateIndex(db int, indexName str, tableName str, columns str);
+extern func void sqliteDropIndex(db int, indexName str);
+extern func str sqliteListIndexes(db int, tableName str);
+extern func void sqliteBulkInsert(db int, tableName str, columnsCsv str, variadic);
+extern func void sqliteExecuteScript(db int, script str);
+extern func str sqliteGetQueryPlan(db int, sql str);
+extern func str sqliteGetPragma(db int, pragmaName str);
+extern func void sqliteSetPragma(db int, pragmaName str, value str);
+extern func void sqliteBackup(db int, filename str);
+extern func void sqliteVacuum(db int);
+extern func void sqliteAnalyze(db int);
+extern func void sqliteOptimize(db int);
+extern func int sqliteGetDatabaseSize(db int);
+extern func str sqliteExportCSV(db int, sql str, filename str);
+
+extern func void println(variadic);
+
+let db int = sqliteOpen("test.db")
+
+sqliteExec(db, "CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)")
+
+sqliteInsert(db, "users", "name", "John")
+sqliteInsert(db, "users", "name", "Jane")
+
+let users str = sqliteQueryAll(db, "SELECT * FROM users")
+println(users)
+
+sqliteClose(db)
