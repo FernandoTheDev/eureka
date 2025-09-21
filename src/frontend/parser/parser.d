@@ -19,6 +19,10 @@ private:
                 .kind == TokenKind.LParen)
                 return parseCallExpr(token.value.get!string);
             return new Identifier(token.value.get!string);
+        case TokenKind.True:
+            return new BoolLiteral(true);
+        case TokenKind.False:
+            return new BoolLiteral(false);
         case TokenKind.Number:
             return new IntLiteral(to!long(token.value.get!string));
         case TokenKind.String:
@@ -29,9 +33,19 @@ private:
             return this.parseVarDecl();
         case TokenKind.Return:
             return this.parseReturn();
+        case TokenKind.Extern:
+            return this.parseExtern();
         default:
             throw new Exception("Noo prefix parse function for " ~ to!string(token));
         }
+    }
+
+    Extern parseExtern()
+    {
+        Node value = this.parseExpression(Precedence.LOWEST);
+        if (value.kind != NodeKind.FuncDeclaration)
+            throw new Exception("Expected 'Function' in extern.");
+        return new Extern(cast(FunctionDeclaration) value);
     }
 
     Return parseReturn()
@@ -76,8 +90,11 @@ private:
             this.consume(TokenKind.RParen, "Exected ')' after args in function declaration.");
         }
 
-        this.consume(TokenKind.LBrace, "Expected '{' for function body.");
         Node[] body;
+        if (this.match([TokenKind.SemiColon]))
+            return new FunctionDeclaration(id.value.get!string, args, body, funcType);
+
+        this.consume(TokenKind.LBrace, "Expected '{' for function body.");
         while (this.peek().kind != TokenKind.RBrace && !this.isAtEnd())
             body ~= this.parseExpression(Precedence.LOWEST);
         this.consume(TokenKind.RBrace, "Expected '}' after function body.");
@@ -90,6 +107,12 @@ private:
         FunctionArgument[] args;
         while (this.peek().kind != TokenKind.RParen && !this.isAtEnd())
         {
+            if (this.match([TokenKind.Variadic]))
+            {
+                args ~= FunctionArgument("...", Type(Types.Undefined, BaseType.Void, true), Variant(
+                        null), false);
+                break;
+            }
             Token id = this.consume(TokenKind.Identifier, "Expected an id for argument name.");
             Type ty = this.parseType();
             args ~= FunctionArgument(id.value.get!string, ty, Variant(null), false);
@@ -106,6 +129,8 @@ private:
         {
         case TokenKind.Int:
             return Type(Types.Literal, BaseType.Int);
+        case TokenKind.Bool:
+            return Type(Types.Literal, BaseType.Bool);
         case TokenKind.Str:
             return Type(Types.Literal, BaseType.String);
         case TokenKind.Void:
@@ -118,7 +143,7 @@ private:
     BinaryExpr parseBinaryExpr(Node left)
     {
         Token op = this.advance();
-        Node right = this.parseExpression(Precedence.LOWEST);
+        Node right = this.parseExpression(this.getPrecedence(op.kind));
         return new BinaryExpr(left, right, op.value.get!string);
     }
 
@@ -128,6 +153,7 @@ private:
         {
         case TokenKind.Plus:
         case TokenKind.Minus:
+        case TokenKind.Star:
             leftOld = parseBinaryExpr(leftOld);
             return;
         default:

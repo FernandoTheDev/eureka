@@ -4,6 +4,7 @@ enum BaseType : string
 {
     String = "string",
     Int = "int",
+    Bool = "bool",
     Void = "void",
 }
 
