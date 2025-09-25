@@ -12,6 +12,21 @@ RuntimeValue print(RuntimeValue[LIMIT] values, size_t argCount)
     {
         RuntimeValue value = values[i];
 
+        if (value.type.type == Types.Array)
+        {
+            c_printf("Array<%s>[", cast(const char*) value.type.baseType);
+            for (size_t j; j < value.value._array.length; j++)
+            {
+                RuntimeValue v = value.value._array[j];
+                RuntimeValue[LIMIT] v_;
+                v_[0] = v;
+                print(v_, 1);
+                if (j + 1 < value.value._array.length)
+                    c_printf(", ");
+            }
+            c_printf("]");
+        }
+
         if (value.type.baseType == BaseType.Bool)
             c_printf("%s", value.value._bool ? "true".toStringz() : "false".toStringz());
         else if (value.type.baseType == BaseType.Int)
@@ -275,4 +290,14 @@ RuntimeValue estrlen(RuntimeValue[LIMIT] values, size_t argCount)
     }
 
     return MK_INT(cast(long) values[0].value._string.length);
+}
+
+RuntimeValue etypeof(RuntimeValue[LIMIT] values, size_t argCount)
+{
+    if (argCount != 1)
+    {
+        throw new Exception("etypeof requires exactly one argument");
+    }
+    string type = cast(string) values[0].type.baseType;
+    return MK_STRING(type);
 }

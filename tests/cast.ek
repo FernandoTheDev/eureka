@@ -1,6 +1,17 @@
-extern func void println(...);
+use "io.ek" : { println, eprintf, etypeof }
 
 let var str = "17"
-let age int = cast!int(str)
+let age int = cast!int(var)
 
-println(typeof(age)) // int
+println(etypeof(age)) // int
+println(etypeof(cast!double(age))) // double
+println(etypeof(cast!float(var))) // float
+println(etypeof(cast!str(cast!double(age)))) // string
+
+let x int = cast!int("999999999999")
+let y float = cast!double(1.7976931348623157f)
+let z double = cast!double("3.14")
+
+println(etypeof(x))
+println(etypeof(y))
+println(etypeof(z))

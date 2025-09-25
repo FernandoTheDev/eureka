@@ -1,39 +1,36 @@
-// for range 0..100
-for i in 0 ..= 100 {
+use "io.ek" : { println, eprintf, print }
 
+println("for range 0..=10:")
+for i in 0 ..= 10 {
+    print(i)
 }
 
-// for range 0..99
-for i in 0..100 {
-
+eprintf("\n\nfor range 0..9:\n")
+for i in 0 .. 10 {
+    print(i)
 }
 
-// se for um decimal (float, double ou real), deverá obrigatoriamente dizer qual o step que o interpretador vai seguir
-// i é um float (tipo passado)
-for i in 0.0f ..= 1f : 0.01f {
-    
+eprintf("\n\nfor range in float:\n")
+for i in 0.0f ..= 1f : 0.1f {
+    print(i, " ")
 }
 
-for i in 1.0f ..= 0.0f : -0.01f {
-    
+eprintf("\n\nfor range in -float:\n")
+for i in 1.0f ..= 0.0f : -0.1f {
+    print(i, " ")
 }
 
-// sem incremento no ID após 'as'
-// for range 0..99
-for 0 .. 100 {
-
+eprintf("\n\nfor range without iterator:\n")
+for 0 .. 10 {
+    print("without i ")
 }
 
-// for cstyle
-// unico forloop que inicia diferente
-for let i int = 0; i < 1000; i++ {
-    
+eprintf("\n\nfor cstyle:\n")
+for let i int = 0; i < 10; i++ {
+    print(i, " ")
 }
 
-// foreach
-// ID sempre nos dois lados
-// meu right deve ser um array
-// o left (name) será uma variavel com tipo do elemento do array, arrays com mixed darão erro
-for name in names {
-
+eprintf("\nforeach in string:\n")
+for ch in "Fernando" {
+    println(ch)
 }

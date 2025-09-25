@@ -1,5 +1,5 @@
 extern func str input(text str);
-extern func str eprintf(text str, variadic);
+extern func str eprintf(text str, ...);
 
 let name str = input("Name: ")
 eprintf("Welcome %s!\n", name)

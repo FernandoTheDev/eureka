@@ -6,4 +6,5 @@ enum Precedence
     CALL = 2,
     SUM = 3,
     MUL = 4,
+    HIGHEST = 8,
 }

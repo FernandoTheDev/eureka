@@ -1,6 +1,3 @@
-use "std.io.vk"
-
-// o argumento é um RuntimeValue[]
-extern builtin func int println();
+use "io.ek"
 
 println("Hello World!")

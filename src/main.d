@@ -1,6 +1,6 @@
 module main;
 
-import std.stdio, std.path, std.getopt, std.file : exists;
+import std.stdio, std.path, std.getopt, std.format, std.file : exists;
 import frontend.lexer.token, frontend.lexer.lexer, frontend.parser.ast, frontend
 	.parser.parser, frontend.type;
 import runtime.context, runtime.runtime_value, runtime.runtime;
@@ -17,6 +17,7 @@ bool checkErrors(DiagnosticError error)
 	if (error.hasErrors() || error.hasWarnings())
 	{
 		error.printDiagnostics();
+		error.clear();
 		return error.hasErrors();
 	}
 	return false;
@@ -90,7 +91,7 @@ void main(string[] args)
 		if (checkErrors(error))
 			return;
 
-		Program prog = new Parser(tokens).parse();
+		Program prog = new Parser(tokens, error).parse();
 
 		if (ast)
 			prog.print();
@@ -116,7 +117,9 @@ void main(string[] args)
 				writeln("# New Context");
 				foreach (string id, RuntimeValue cnt; value)
 				{
-					writef("%s: %s = ", id, cast(string) cnt.type.baseType);
+					writef("%s: %s = ", id, cnt.type.type == Types.Array ? cast(string) cnt.type.baseType ~ format(
+							"[%d]", cnt.type.dimensions) : cast(
+							string) cnt.type.baseType);
 					if (cnt.type.baseType == BaseType.Int)
 						writeln(cnt.value._int);
 					if (cnt.type.baseType == BaseType.String)

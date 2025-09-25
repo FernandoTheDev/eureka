@@ -167,7 +167,7 @@ void replMode()
                 string source = buffer.join("\n");
                 Lexer lexer = new Lexer("repl", source, ".", new DiagnosticError());
                 Token[] tokens = lexer.tokenize();
-                Program prog = new Parser(tokens).parse();
+                Program prog = new Parser(tokens, new DiagnosticError()).parse();
                 eureka.eval(prog);
 
                 writeln("Execution completed.");

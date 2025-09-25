@@ -4,6 +4,7 @@ extern func void println(...);
 extern func void eprintf(msg str, ...);
 extern func void put(ch int);
 extern func int estrlen(text str);
+extern func int etypeof(...);
 extern func str input(text str);
 
 // print("Hello", " ", "World ")

@@ -1,7 +1,6 @@
 extern func str input(prompt str);
-extern func int toInt(variadic);
-extern func void eprintf(format str, variadic);
+extern func void eprintf(format str, ...);
 
 let name str = input("Name: ")
-let age int = toInt(input("Age: "))
+let age int = cast!int(input("Age: "))
 eprintf("Hello %s, you are %d years old!\n", name, age)

@@ -17,16 +17,23 @@ enum NodeKind
     BoolLiteral,
     FloatLiteral,
     RealLiteral,
+    ArrayLiteral,
 
     FuncDeclaration,
     VarDeclaration,
+    VarAssignmentDecl,
 
     BinaryExpr,
     CallExpr,
+    UnaryExpr,
+    CastExpr,
 
     IfStatement,
     ElseStatement,
     UseStatement,
+    ForRangeStmt,
+    ForStmt, // C-style for loop
+    ForEachStmt,
 }
 
 abstract class Node
@@ -167,6 +174,30 @@ class VarDeclaration : Node
     }
 }
 
+class VarAssignmentDecl : Node
+{
+    string id;
+    this(string id, Type type, Node value, Loc loc)
+    {
+        this.kind = NodeKind.VarAssignmentDecl;
+        this.id = id;
+        this.type = type;
+        this.value = value;
+        this.loc = loc;
+    }
+
+    override void print(ulong ident = 0, bool isLast = false)
+    {
+        string prefix = isLast ? "└── " : "├── ";
+        string continuation = isLast ? "    " : "│   ";
+
+        println(prefix ~ "VarAssignmentDecl: " ~ id, ident);
+        println(continuation ~ "├── Type: " ~ cast(string) type.baseType, ident);
+        println(continuation ~ "└── Value:", ident);
+        value.get!Node.print(ident + continuation.length + 4, true);
+    }
+}
+
 class BoolLiteral : Node
 {
     this(bool n, Loc loc)
@@ -284,6 +315,26 @@ class StringLiteral : Node
 
         println(prefix ~ "StringLiteral: \"" ~ value.get!string ~ "\"", ident);
         println(continuation ~ "└── Type: " ~ cast(string) type.baseType, ident);
+    }
+}
+
+class ArrayLiteral : Node
+{
+    this(Node[] value, Type type, Loc loc)
+    {
+        this.kind = NodeKind.ArrayLiteral;
+        this.type = type;
+        this.value = value;
+        this.loc = loc;
+    }
+
+    override void print(ulong ident = 0, bool isLast = false)
+    {
+        string prefix = isLast ? "└── " : "├── ";
+        string continuation = isLast ? "    " : "│   ";
+
+        println(prefix ~ "ArrayLiteral: ", ident);
+        println(continuation ~ "└── Type: " ~ cast(string) type.baseType ~ "[]", ident);
     }
 }
 
@@ -501,5 +552,248 @@ class UseStatement : Node
         println(prefix ~ "UseStatement", ident);
         println(continuation ~ "├── Type: " ~ cast(string) type.baseType, ident);
         println(continuation ~ "├── Value: " ~ value.get!string, ident);
+    }
+}
+
+class UnaryExpr : Node
+{
+    string op; // "-", "!", "+"
+    Node operand;
+    bool postFix;
+
+    this(string op, Node operand, Loc loc, bool postFix = false)
+    {
+        this.kind = NodeKind.UnaryExpr;
+        this.op = op;
+        this.postFix = postFix;
+        this.operand = operand;
+        this.value = null;
+        this.type = Type(Types.Void, BaseType.Void);
+        this.loc = loc;
+    }
+
+    override void print(ulong ident = 0, bool isLast = false)
+    {
+        string prefix = isLast ? "└── " : "├── ";
+        string continuation = isLast ? "    " : "│   ";
+
+        println(prefix ~ "UnaryExpr", ident);
+        println(continuation ~ "├── Type: " ~ cast(string) type.baseType, ident);
+        println(continuation ~ "├── Operator: " ~ op, ident);
+        println(continuation ~ "├── PostFix: " ~ (postFix ? "true" : "false"), ident);
+
+        if (operand !is null)
+        {
+            println(continuation ~ "└── Operand:", ident);
+            operand.print(ident + continuation.length + 4, true);
+        }
+        else
+            println(continuation ~ "└── Operand: null", ident);
+    }
+}
+
+// cast!T(value)
+class CastExpr : Node
+{
+    Type target;
+    this(Type target, Node value, Loc loc)
+    {
+        this.kind = NodeKind.CastExpr;
+        this.value = value;
+        this.type = target;
+        this.target = target;
+        this.loc = loc;
+    }
+
+    override void print(ulong ident = 0, bool isLast = false)
+    {
+        string prefix = isLast ? "└── " : "├── ";
+        string continuation = isLast ? "    " : "│   ";
+
+        println(prefix ~ "CastExpr", ident);
+        println(continuation ~ "├── Type: " ~ cast(string) type.baseType, ident);
+        println(continuation ~ "├── Target Type: " ~ cast(string) target.baseType, ident);
+        println(continuation ~ "└── Value:", ident);
+        value.get!Node.print(ident + continuation.length + 4, true);
+    }
+}
+
+// For range loops: for i in 0..100 { } ou for i in 0..=100 { }
+class ForRangeStmt : Node
+{
+    string iterator;
+    Node start;
+    Node end;
+    Node step;
+    bool inclusive;
+    Node[] body;
+    bool hasIterator;
+
+    this(string iterator, Node start, Node end, Node[] body, bool inclusive = false,
+        Node step = null, bool hasIterator = true, Loc loc)
+    {
+        this.kind = NodeKind.ForRangeStmt;
+        this.type = Type(Types.Void, BaseType.Void);
+        this.value = null;
+        this.iterator = iterator;
+        this.start = start;
+        this.end = end;
+        this.step = step;
+        this.inclusive = inclusive;
+        this.body = body;
+        this.hasIterator = hasIterator;
+        this.loc = loc;
+    }
+
+    override void print(ulong ident = 0, bool isLast = false)
+    {
+        string prefix = isLast ? "└── " : "├── ";
+        string continuation = isLast ? "    " : "│   ";
+
+        string rangeOp = inclusive ? "..=" : "..";
+        string iteratorInfo = hasIterator ? ("Iterator: " ~ iterator) : "Anonymous";
+
+        println(prefix ~ "ForRangeStmt (" ~ rangeOp ~ ")", ident);
+        println(continuation ~ "├── Type: " ~ cast(string) type.baseType, ident);
+        println(continuation ~ "├── " ~ iteratorInfo, ident);
+
+        // Start expression
+        println(continuation ~ "├── Start:", ident);
+        if (start !is null)
+            start.print(ident + continuation.length + 4, false);
+        else
+            println(continuation ~ "│   └── (null)", ident);
+
+        // End expression
+        println(continuation ~ "├── End:", ident);
+        if (end !is null)
+            end.print(ident + continuation.length + 4, false);
+        else
+            println(continuation ~ "│   └── (null)", ident);
+
+        if (step !is null)
+        {
+            println(continuation ~ "├── Step:", ident);
+            step.print(ident + continuation.length + 4, false);
+        }
+
+        println(continuation ~ "└── Body (" ~ to!string(body.length) ~ " statements):", ident);
+        foreach (size_t i, Node node; body)
+        {
+            if (i == cast(uint)
+                body.length - 1)
+                node.print(ident + continuation.length + 4, true);
+            else
+                node.print(ident + continuation.length + 4, false);
+        }
+    }
+}
+
+// C-style for loop: for let i int = 0; i < 1000; i++ { }
+class ForStmt : Node
+{
+    Node init_;
+    Node condition;
+    Node increment;
+    Node[] body;
+
+    this(Node init_, Node condition, Node increment, Node[] body, Loc loc)
+    {
+        this.kind = NodeKind.ForStmt;
+        this.type = Type(Types.Void, BaseType.Void);
+        this.value = null;
+        this.init_ = init_;
+        this.condition = condition;
+        this.increment = increment;
+        this.body = body;
+        this.loc = loc;
+    }
+
+    override void print(ulong ident = 0, bool isLast = false)
+    {
+        string prefix = isLast ? "└── " : "├── ";
+        string continuation = isLast ? "    " : "│   ";
+
+        println(prefix ~ "ForStmt (C-style)", ident);
+        println(continuation ~ "├── Type: " ~ cast(string) type.baseType, ident);
+
+        // Initialization
+        println(continuation ~ "├── Init:", ident);
+        if (init_ !is null)
+            init_.print(ident + continuation.length + 4, false);
+        else
+            println(continuation ~ "│   └── (null)", ident);
+
+        // Condition
+        println(continuation ~ "├── Condition:", ident);
+        if (condition !is null)
+            condition.print(ident + continuation.length + 4, false);
+        else
+            println(continuation ~ "│   └── (null)", ident);
+
+        // Increment
+        println(continuation ~ "├── Increment:", ident);
+        if (increment !is null)
+            increment.print(ident + continuation.length + 4, false);
+        else
+            println(continuation ~ "│   └── (null)", ident);
+
+        // Body
+        println(continuation ~ "└── Body (" ~ to!string(body.length) ~ " statements):", ident);
+        foreach (size_t i, Node node; body)
+        {
+            if (i == cast(uint)
+                body.length - 1)
+                node.print(ident + continuation.length + 4, true);
+            else
+                node.print(ident + continuation.length + 4, false);
+        }
+    }
+}
+
+// For-each loop: for name in names { }
+class ForEachStmt : Node
+{
+    string iterator;
+    Node iterable;
+    Node[] body;
+
+    this(string iterator, Node iterable, Node[] body, Loc loc = Loc.init)
+    {
+        this.kind = NodeKind.ForEachStmt;
+        this.type = Type(Types.Void, BaseType.Void);
+        this.value = null;
+        this.iterator = iterator;
+        this.iterable = iterable;
+        this.body = body;
+        this.loc = loc;
+    }
+
+    override void print(ulong ident = 0, bool isLast = false)
+    {
+        string prefix = isLast ? "└── " : "├── ";
+        string continuation = isLast ? "    " : "│   ";
+
+        println(prefix ~ "ForEachStmt", ident);
+        println(continuation ~ "├── Type: " ~ cast(string) type.baseType, ident);
+        println(continuation ~ "├── Iterator: " ~ iterator, ident);
+
+        // Iterable expression
+        println(continuation ~ "├── Iterable:", ident);
+        if (iterable !is null)
+            iterable.print(ident + continuation.length + 4, false);
+        else
+            println(continuation ~ "│   └── (null)", ident);
+
+        // Body
+        println(continuation ~ "└── Body (" ~ to!string(body.length) ~ " statements):", ident);
+        foreach (size_t i, Node node; body)
+        {
+            if (i == cast(uint)
+                body.length - 1)
+                node.print(ident + continuation.length + 4, true);
+            else
+                node.print(ident + continuation.length + 4, false);
+        }
     }
 }

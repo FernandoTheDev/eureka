@@ -12,6 +12,9 @@ enum BaseType : string
 
     Bool = "bool",
     Void = "void",
+
+    // unsafe
+    Mixed = "mixed",
 }
 
 enum Types : string

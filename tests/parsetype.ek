@@ -1,0 +1,11 @@
+let name  str       = "Fernando"
+let age   int       = 17
+let pi    float     = 3.141592f
+let d     double    = 3.141592 
+let r     real      = 3.141592L
+let b     bool      = true // or false
+
+// arrays
+let names str[]     = ["Fernando", "Cabral"]
+let ages  int[1][1] = [[17]]
+let mixin mixed[]   = ["any", 1, "types"] // unsafe

@@ -32,6 +32,9 @@ private:
         keywords["do"] = TokenKind.Do;
         keywords["break"] = TokenKind.Break;
         keywords["continue"] = TokenKind.Continue;
+        keywords["cast"] = TokenKind.Cast;
+        keywords["mixed"] = TokenKind.Mixed;
+        keywords["in"] = TokenKind.In;
 
         // types
         // numeric
@@ -69,8 +72,20 @@ private:
         symbols["<="] = TokenKind.LessThanEquals;
         symbols["=="] = TokenKind.EqualsEquals;
         symbols["."] = TokenKind.Dot;
+        symbols["!"] = TokenKind.Bang;
+        symbols["%"] = TokenKind.Modulo;
+
+        // 2
+        symbols["||"] = TokenKind.Or;
+        symbols["&&"] = TokenKind.And;
         symbols[".."] = TokenKind.Range;
+        symbols["++"] = TokenKind.PlusPlus;
+        symbols["--"] = TokenKind.MinusMinus;
+        symbols["+="] = TokenKind.PlusEquals;
+
+        // 3
         symbols["..."] = TokenKind.Variadic;
+        symbols["..="] = TokenKind.RangeEquals;
     }
 
     bool lexChar(char c)
@@ -106,9 +121,9 @@ private:
         return false;
     }
 
-    Loc createLoc(ulong len)
+    Loc createLoc(ulong len, long line_ = -1)
     {
-        return Loc(filename, dir, line, lineOffset - len + 1, lineOffset);
+        return Loc(filename, dir, line_ == -1 ? line : line_, lineOffset - len + 1, lineOffset);
     }
 
     void createToken(TokenKind kind, Variant value, ulong len)
@@ -184,9 +199,9 @@ public:
                 }
 
                 if (id in keywords)
-                    createToken(keywords[id], Variant(id), id.length);
+                    createToken(keywords[id], Variant(id), id.length + 1);
                 else
-                    createToken(TokenKind.Identifier, Variant(id), id.length);
+                    createToken(TokenKind.Identifier, Variant(id), id.length + 1);
                 continue;
             }
 
@@ -203,7 +218,7 @@ public:
                     advance();
                 }
 
-                if (offset < source.length && peek() == '.')
+                if (offset < source.length && peek() == '.' && source[offset + 1] != '.')
                 {
                     n ~= ".";
                     advance();
@@ -235,16 +250,16 @@ public:
                         createToken(TokenKind.Real, Variant(n), n.length + 1);
                     }
                     else if (isDouble)
-                        createToken(TokenKind.Double, Variant(n), n.length);
+                        createToken(TokenKind.Double, Variant(n), n.length + 1);
                     else
-                        createToken(TokenKind.Number, Variant(n), n.length);
+                        createToken(TokenKind.Number, Variant(n), n.length + 1);
                 }
                 else
                 {
                     if (isDouble)
-                        createToken(TokenKind.Double, Variant(n), n.length);
+                        createToken(TokenKind.Double, Variant(n), n.length + 1);
                     else
-                        createToken(TokenKind.Number, Variant(n), n.length);
+                        createToken(TokenKind.Number, Variant(n), n.length + 1);
                 }
                 continue;
             }
@@ -287,6 +302,7 @@ public:
             // Strings
             if (ch == '"')
             {
+                long line_ = line;
                 advance();
                 string buff;
 
@@ -299,18 +315,16 @@ public:
                 if (offset < source.length && peek() == '"')
                 {
                     advance();
-                    createToken(TokenKind.String, Variant(buff), buff.length + 2);
+                    createToken(TokenKind.String, Variant(buff), buff.length + 3);
                 }
                 else
                 {
-                    writeln(Diagnostic("Unterminated string literal", createLoc(1)));
-                    error.addError(Diagnostic("Unterminated string literal", createLoc(1)));
+                    error.addError(Diagnostic("Unterminated string literal", createLoc(1, line_)));
                     createToken(TokenKind.String, Variant(buff), buff.length + 1);
                 }
                 continue;
             }
 
-            writeln(Diagnostic(format("Invalid char '%c'", ch), createLoc(1)));
             error.addError(Diagnostic(format("Invalid char '%c'", ch), createLoc(1)));
             advance();
         }

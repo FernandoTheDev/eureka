@@ -10,8 +10,8 @@ extern func str sqliteQuerySingle(db int, sql str);
 extern func str sqliteQueryAll(db int, sql str);
 extern func str sqliteQueryColumn(db int, sql str, column int);
 extern func int sqliteCount(db int, sql str);
-extern func void sqlitePrepare(db int, sql str, variadic);
-extern func void sqliteInsert(db int, table str, variadic);
+extern func void sqlitePrepare(db int, sql str, ...);
+extern func void sqliteInsert(db int, table str, ...);
 extern func void sqliteBeginTransaction(db int);
 extern func void sqliteCommit(db int);
 extern func void sqliteRollback(db int);
@@ -22,7 +22,7 @@ extern func str sqliteGetTableSchema(db int, tableName str);
 extern func void sqliteCreateIndex(db int, indexName str, tableName str, columns str);
 extern func void sqliteDropIndex(db int, indexName str);
 extern func str sqliteListIndexes(db int, tableName str);
-extern func void sqliteBulkInsert(db int, tableName str, columnsCsv str, variadic);
+extern func void sqliteBulkInsert(db int, tableName str, columnsCsv str, ...);
 extern func void sqliteExecuteScript(db int, script str);
 extern func str sqliteGetQueryPlan(db int, sql str);
 extern func str sqliteGetPragma(db int, pragmaName str);
@@ -34,7 +34,7 @@ extern func void sqliteOptimize(db int);
 extern func int sqliteGetDatabaseSize(db int);
 extern func str sqliteExportCSV(db int, sql str, filename str);
 
-extern func void println(variadic);
+extern func void println(...);
 
 let db int = sqliteOpen("test.db")
 

@@ -18,6 +18,8 @@ enum TokenKind
     Break, // break
     Continue, // continue
     Use, // use
+    Cast, // cast
+    In, // in
 
     // types
     Double, // double
@@ -27,6 +29,7 @@ enum TokenKind
     Bool, // bool
     Str, // str
     Void, // void
+    Mixed, // mixed <- unsafe
     True, // true
     False, // false
 
@@ -42,7 +45,9 @@ enum TokenKind
     LBracket, // [
     RBracket, // ]
     Plus, // +
+    PlusPlus, // ++
     Minus, // -
+    MinusMinus, // --
     Star, // *
     Slash, // /
     Comma, // ,
@@ -51,11 +56,17 @@ enum TokenKind
     Equals, // =
     Dot, // .
     Range, // ..
+    RangeEquals, // ..=
+    Bang, // !
+    Modulo, // %
 
     GreaterThan, // >
     GreaterThanEquals, // >=
     LessThan, // <
     LessThanEquals, // <=
+    Or, // ||
+    And, // &&
+    PlusEquals, // +=
 
     EqualsEquals, // ==
 
@@ -72,6 +83,7 @@ struct Token
     {
         writeln("TokenKind: ", to!string(kind));
         writeln("TokenValue: ", to!string(value));
+        writeln("Loc: ", loc);
     }
 }
 

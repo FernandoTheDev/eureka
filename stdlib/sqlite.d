@@ -129,7 +129,7 @@ RuntimeValue sqliteCount(RuntimeValue[LIMIT] values, size_t argCount)
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
         count++;
-        if (count > 10000)
+        if (count > 10_000)
             break; // Limite de segurança
     }
 

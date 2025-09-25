@@ -47,6 +47,24 @@ class Context
         contexts[offset][id] = sym;
     }
 
+    void removeRuntimeValue(string id)
+    {
+        if (!checkRuntimeValue(id))
+            throw new Exception("Símbolo não existe: " ~ id);
+        if (offset < 0 || offset >= contexts.length)
+            throw new Exception("Offset de contexto inválido");
+        contexts[offset].remove(id);
+    }
+
+    void updateRuntimeValue(string id, RuntimeValue value)
+    {
+        if (!checkRuntimeValue(id))
+            throw new Exception("Símbolo não existe: " ~ id);
+        if (offset < 0 || offset >= contexts.length)
+            throw new Exception("Offset de contexto inválido");
+        contexts[offset][id] = value;
+    }
+
     void addFunc(string id, RuntimeValue sym)
     {
         if (checkRuntimeValue(id, true))

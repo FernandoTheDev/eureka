@@ -11,6 +11,7 @@ union ValueData
     real _real;
     bool _bool;
     string _string;
+    RuntimeValue[] _array;
     FunctionDeclaration _function;
 }
 
@@ -28,6 +29,13 @@ RuntimeValue MK_INT(long n = 0)
     ValueData value;
     value._int = n;
     return RuntimeValue(Type(Types.Literal, BaseType.Int), value);
+}
+
+RuntimeValue MK_ARRAY(RuntimeValue[] v, Type type)
+{
+    ValueData value;
+    value._array = v;
+    return RuntimeValue(type, value);
 }
 
 RuntimeValue MK_FLOAT(float n = 0.0)

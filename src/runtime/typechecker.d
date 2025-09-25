@@ -12,7 +12,7 @@ public:
         return isComp(left.baseType, right.baseType);
     }
 
-    bool isComp(BaseType left, BaseType right)
+    static bool isComp(BaseType left, BaseType right)
     {
         string leftStr = cast(string) left;
         string rightStr = cast(string) right;
@@ -20,10 +20,11 @@ public:
         string[][string] map = [
             "int": ["int", "float", "double", "real", "string", "bool"],
             "double": ["double", "real", "string"],
-            "float": ["float", "double", "real", "string"],
-            "string": ["string", "bool"],
+            "float": ["float", "double", "real", "string", "int"],
+            "string": ["string", "bool", "int", "float", "double", "real"],
             "bool": ["bool", "int", "string"],
-            "real": ["real", "string"]
+            "real": ["real", "string"],
+            "mixed": ["mixed"], // unsafe
         ];
 
         if (leftStr !in map || !canFind(map[leftStr], rightStr) || rightStr !in map)
@@ -49,7 +50,8 @@ public:
 
     bool isNumericType(BaseType bt)
     {
-        return bt == BaseType.Int;
+        return bt == BaseType.Int || bt == BaseType.Float || bt == BaseType.Double || bt == BaseType
+            .Real;
     }
 
     Type inferType(Type left, Type right)
@@ -59,7 +61,15 @@ public:
                     cast(string) left.baseType, cast(string) right.baseType)
             );
         if (isNumericType(left) && isNumericType(right))
-            return Type(Types.Literal, BaseType.Int, false);
+        {
+            if (left.baseType == BaseType.Real || right.baseType == BaseType.Real)
+                return Type(Types.Literal, BaseType.Real);
+            if (left.baseType == BaseType.Float || right.baseType == BaseType.Float)
+                return Type(Types.Literal, BaseType.Float);
+            if (left.baseType == BaseType.Double || right.baseType == BaseType.Double)
+                return Type(Types.Literal, BaseType.Double);
+            return Type(Types.Literal, BaseType.Int);
+        }
         return Type(Types.Literal, BaseType.String, false);
     }
 }

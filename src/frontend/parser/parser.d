@@ -15,11 +15,40 @@ private:
         Token token = this.advance();
         switch (token.kind)
         {
+        case TokenKind.LParen:
+            Node value = this.parseExpression(Precedence.CALL);
+            this.consume(TokenKind.RParen, "Expected ')' after the value.");
+            return value;
+
         case TokenKind.Identifier:
             if (this.peek()
                 .kind == TokenKind.LParen)
                 return parseCallExpr(token.value.get!string, token.loc);
+
+            if (this.peek()
+                .kind == TokenKind.Equals)
+            {
+                this.advance(); // skip '='
+                Node value = this.parseExpression(Precedence.LOWEST);
+                return new VarAssignmentDecl(token.value.get!string, value.type, value, token.loc);
+            }
+
+            if (this.check(TokenKind.PlusPlus) || this.check(TokenKind.MinusMinus))
+            {
+                Token postOp = this.advance();
+                Node operand = new Identifier(token.value.get!string, token.loc);
+                return new UnaryExpr(postOp.value.get!string, operand, token.loc, true);
+            }
             return new Identifier(token.value.get!string, token.loc);
+
+        case TokenKind.PlusPlus:
+        case TokenKind.MinusMinus:
+        case TokenKind.Plus:
+        case TokenKind.Minus:
+        case TokenKind.Bang:
+            Node operand = this.parseExpression(Precedence.HIGHEST);
+            return new UnaryExpr(token.value.get!string, operand, token.loc, false);
+
         case TokenKind.True:
             return new BoolLiteral(true, token.loc);
         case TokenKind.False:
@@ -34,6 +63,17 @@ private:
             return new FloatLiteral(to!float(token.value.get!string), token.loc);
         case TokenKind.String:
             return new StringLiteral(token.value.get!string, token.loc);
+        case TokenKind.LBracket:
+            Node[] values;
+            while (!this.check(TokenKind.RBracket) && !this.isAtEnd())
+            {
+                values ~= this.parseExpression(Precedence.LOWEST);
+                this.match([TokenKind.Comma]);
+            }
+            Loc end = this.consume(TokenKind.RBracket, "Expected ']' after array literal.").loc;
+            return new ArrayLiteral(values, Type(Types.Array, values.length > 0 ? values[0].type.baseType
+                    : BaseType.Void), this.getLoc(token.loc, end));
+
         case TokenKind.Func:
             return this.parseFuncDecl();
         case TokenKind.Let:
@@ -46,9 +86,171 @@ private:
             return this.parseIfStatement();
         case TokenKind.Use:
             return this.parseUseStatement();
+        case TokenKind.Cast:
+            return this.parseCastExpr();
+        case TokenKind.For:
+            return this.parseForStatement();
         default:
-            throw new Exception("Noo prefix parse function for " ~ to!string(token));
+            if (error !is null)
+                error.addError(Diagnostic(format("Noo prefix parse function for '%s'.", to!string(
+                        token.value)), token.loc));
+            throw new Exception(format("Noo prefix parse function for '%s'.", to!string(token.value)));
         }
+    }
+
+    Node parseForStatement()
+    {
+        Loc start = this.previous().loc;
+
+        if (this.check(TokenKind.Let))
+        {
+            this.advance();
+            return parseForStmt(start);
+        }
+        else if (this.check(TokenKind.Identifier))
+        {
+            ulong savedPos = this.pos;
+            Token id = this.advance();
+
+            if (this.check(TokenKind.In))
+            {
+                this.advance();
+
+                if (this.isRangeExpression()) // ForRange: for i in 0..100 { }
+                    return parseForRangeStmt(id.value.get!string, start);
+                else // ForEach: for name in names { }
+                    return parseForEachStmt(id.value.get!string, start);
+            }
+            else
+            {
+                this.pos = savedPos;
+                error.addError(Diagnostic("Expected 'in' after identifier in for statement", this.peek()
+                        .loc));
+                throw new Exception("Expected 'in' after identifier in for statement");
+            }
+        }
+        else if (this.check(TokenKind.Number) || this.check(TokenKind.Double) ||
+            this.check(TokenKind.Real) || this.check(TokenKind.Float) ||
+            this.check(TokenKind.LParen)) // Anonymous range: for 0..100 { }
+            return parseForRangeStmt("", start);
+        else
+        {
+            error.addError(Diagnostic("Invalid for statement syntax", this.peek().loc));
+            throw new Exception("Invalid for statement syntax");
+        }
+    }
+
+    ForStmt parseForStmt(Loc start)
+    {
+        Node init = this.parseVarDecl(); // let i int = 0
+        this.consume(TokenKind.SemiColon, "Expected ';' after for loop initialization");
+        Node condition = this.parseExpression(Precedence.LOWEST); // i < 1000
+        this.consume(TokenKind.SemiColon, "Expected ';' after for loop condition");
+        Node increment = this.parseExpression(Precedence.LOWEST); // i++
+        Node[] body = this.parseBody(); // { ... }
+        return new ForStmt(init, condition, increment, body, start);
+    }
+
+    ForRangeStmt parseForRangeStmt(string iterator, Loc start)
+    {
+        bool hasIterator = iterator.length > 0;
+        Node startExpr = this.parseExpression(Precedence.LOWEST);
+        bool inclusive = false;
+        if (this.check(TokenKind.Range))
+        {
+            this.advance();
+            if (this.check(TokenKind.Equals))
+            {
+                this.advance();
+                inclusive = true;
+            }
+        }
+        else if (this.check(TokenKind.RangeEquals))
+        {
+            this.advance();
+            inclusive = true;
+        }
+        else
+        {
+            error.addError(Diagnostic("Expected '..' or '..=' in range expression", this.peek().loc));
+            throw new Exception("Expected '..' or '..=' in range expression");
+        }
+
+        Node endExpr = this.parseExpression(Precedence.LOWEST);
+        Node stepExpr = null;
+        if (this.check(TokenKind.Colon))
+        {
+            this.advance();
+            stepExpr = this.parseExpression(Precedence.LOWEST);
+        }
+
+        Node[] body = this.parseBody();
+        return new ForRangeStmt(iterator, startExpr, endExpr, body, inclusive, stepExpr, hasIterator, start);
+    }
+
+    ForEachStmt parseForEachStmt(string iterator, Loc start)
+    {
+        Node iterable = this.parseExpression(Precedence.LOWEST);
+        Node[] body = this.parseBody();
+        return new ForEachStmt(iterator, iterable, body, start);
+    }
+
+    bool isRangeExpression()
+    {
+        ulong savedPos = this.pos;
+
+        try
+        {
+            this.parseExpression(Precedence.LOWEST);
+            bool isRange = this.check(TokenKind.Range) || this.check(TokenKind.RangeEquals);
+            this.pos = savedPos;
+            return isRange;
+        }
+        catch (Exception)
+        {
+            this.pos = savedPos;
+            return false;
+        }
+    }
+
+    Node parseUnaryExpr()
+    {
+        Token op = this.advance();
+        Node operand = null;
+        bool postFix = false;
+
+        if (op.kind == TokenKind.Identifier)
+        {
+            operand = new Identifier(op.value.get!string, op.loc);
+            if (this.check(TokenKind.PlusPlus) || this.check(TokenKind.MinusMinus))
+            {
+                Token postOp = this.advance();
+                return new UnaryExpr(postOp.value.get!string, operand, op.loc, true);
+            }
+        }
+        else if (op.kind == TokenKind.PlusPlus || op.kind == TokenKind.MinusMinus)
+        {
+            operand = this.parseExpression(Precedence.HIGHEST);
+            return new UnaryExpr(op.value.get!string, operand, op.loc, false);
+        }
+        else if (op.kind == TokenKind.Plus || op.kind == TokenKind.Minus || op.kind == TokenKind
+            .Bang)
+        {
+            operand = this.parseExpression(Precedence.HIGHEST);
+            return new UnaryExpr(op.value.get!string, operand, op.loc, false);
+        }
+
+        error.addError(Diagnostic("Invalid unary expression", op.loc));
+        throw new Exception("Invalid unary expression");
+    }
+
+    CastExpr parseCastExpr()
+    {
+        Loc start = this.previous().loc;
+        this.consume(TokenKind.Bang, "Expected '!' after 'cast'.");
+        Type target = this.parseType();
+        Node value = this.parseExpression(Precedence.LOWEST);
+        return new CastExpr(target, value, start);
     }
 
     UseStatement parseUseStatement()
@@ -102,7 +304,10 @@ private:
         Loc start = this.previous().loc;
         Node value = this.parseExpression(Precedence.LOWEST);
         if (value.kind != NodeKind.FuncDeclaration)
+        {
+            error.addError(Diagnostic("Expected 'Function' in extern.", value.loc));
             throw new Exception("Expected 'Function' in extern.");
+        }
         return new Extern(cast(FunctionDeclaration) value, start);
     }
 
@@ -134,6 +339,8 @@ private:
         Type ty = this.parseType();
         this.consume(TokenKind.Equals, "Expected '=' after variable type.");
         Node value = this.parseExpression(Precedence.LOWEST);
+        if (value.kind == NodeKind.ArrayLiteral)
+            value.type = ty;
         return new VarDeclaration(id.value.get!string, ty, value, id.loc);
     }
 
@@ -198,24 +405,48 @@ private:
 
     Type parseType()
     {
-        // TODO: arrays suport
         Token ty = this.advance();
+        bool isArray = this.match([TokenKind.LBracket]);
+        long dim;
+        if (isArray)
+        {
+            if (this.check(TokenKind.Number))
+                dim = to!long(this.advance().value.get!string);
+            this.consume(TokenKind.RBracket, "Expected ']' after array type.");
+        }
+
         switch (ty.kind)
         {
         case TokenKind.Int:
+            if (isArray)
+                return Type(Types.Array, BaseType.Int, false, to!ulong(dim));
             return Type(Types.Literal, BaseType.Int);
         case TokenKind.Float:
+            if (isArray)
+                return Type(Types.Array, BaseType.Float, false, to!ulong(dim));
             return Type(Types.Literal, BaseType.Float);
         case TokenKind.Double:
+            if (isArray)
+                return Type(Types.Array, BaseType.Double, false, to!ulong(dim));
             return Type(Types.Literal, BaseType.Double);
         case TokenKind.Real:
+            if (isArray)
+                return Type(Types.Array, BaseType.Real, false, to!ulong(dim));
             return Type(Types.Literal, BaseType.Real);
         case TokenKind.Bool:
+            if (isArray)
+                return Type(Types.Array, BaseType.Bool, false, to!ulong(dim));
             return Type(Types.Literal, BaseType.Bool);
         case TokenKind.Str:
+            if (isArray)
+                return Type(Types.Array, BaseType.String, false, to!ulong(dim));
             return Type(Types.Literal, BaseType.String);
         case TokenKind.Void:
             return Type(Types.Void, BaseType.Void);
+        case TokenKind.Mixed:
+            this.error.addWarning(Diagnostic(
+                    "The 'mixed' type is unsafe, be careful when using it", ty.loc));
+            return Type(Types.Array, BaseType.Mixed);
         default:
             return Type(Types.Undefined, BaseType.Void);
         }
@@ -234,12 +465,17 @@ private:
         {
         case TokenKind.Plus:
         case TokenKind.Minus:
+        case TokenKind.Slash:
         case TokenKind.Star:
+        case TokenKind.Or:
+        case TokenKind.And:
         case TokenKind.EqualsEquals:
         case TokenKind.GreaterThan:
         case TokenKind.GreaterThanEquals:
         case TokenKind.LessThanEquals:
         case TokenKind.LessThan:
+        case TokenKind.Modulo:
+        case TokenKind.PlusEquals:
             leftOld = parseBinaryExpr(leftOld);
             return;
         default:
@@ -320,7 +556,6 @@ private:
     {
         if (this.check(expected))
             return this.advance();
-        this.peek().print();
         error.addError(Diagnostic(format(`Parser Error: %s`, message), this.peek().loc));
         throw new Exception(format(`Parser Error: %s`, message));
     }
@@ -336,9 +571,13 @@ private:
         case TokenKind.LessThan:
         case TokenKind.LessThanEquals:
         case TokenKind.GreaterThanEquals:
+        case TokenKind.Or:
+        case TokenKind.And:
+        case TokenKind.PlusEquals:
             return Precedence.SUM;
         case TokenKind.Star:
         case TokenKind.Slash:
+        case TokenKind.Modulo:
             return Precedence.MUL;
         default:
             return Precedence.LOWEST;
@@ -356,8 +595,9 @@ private:
     }
 
 public:
-    this(Token[] tokens = [])
+    this(Token[] tokens = [], DiagnosticError error)
     {
+        this.error = error;
         this.tokens = tokens;
     }
 
