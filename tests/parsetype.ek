@@ -7,5 +7,7 @@ let b     bool      = true // or false
 
 // arrays
 let names str[]     = ["Fernando", "Cabral"]
-let ages  int[1][1] = [[17]]
+let ages  int[1] = [[17]]
 let mixin mixed[]   = ["any", 1, "types"] // unsafe
+let ages2 *int[1] = &ages
+let ages3 *(*int)[1] = &ages2
