@@ -20,6 +20,8 @@ enum TokenKind
     Use, // use
     Cast, // cast
     In, // in
+    Const, // const
+    Mut, // mut
 
     // types
     Double, // double
@@ -49,6 +51,7 @@ enum TokenKind
     Minus, // -
     MinusMinus, // --
     Star, // *
+    Ampersand, // &
     Slash, // /
     Comma, // ,
     Colon, // :
@@ -67,6 +70,7 @@ enum TokenKind
     Or, // ||
     And, // &&
     PlusEquals, // +=
+    Arrow, // ->
 
     EqualsEquals, // ==
 

@@ -165,10 +165,10 @@ public:
             VarDeclaration var = cast(VarDeclaration) node;
             value = this.eval(var.value.get!Node);
 
-            if (!typeChecker.isComp(var.type, value.type))
+            if (!var.type.isCompatibleWith(value.type))
             {
                 error.addError(Diagnostic(format("Incompatible type: expected '%s', received '%s'.",
-                        cast(string) var.type.baseType, cast(string) value.type.baseType), var.loc));
+                        var.type.toString(), value.type.toString()), var.loc));
                 throw new Exception(format("Incompatible type: expected '%s', received '%s'.",
                         cast(string) var.type.baseType, cast(string) value.type.baseType));
             }
@@ -210,7 +210,7 @@ public:
                     // Error:
                 }
                 Identifier lft = cast(Identifier) binExpr.left;
-                if (left.type.type == Types.Array)
+                if (left.type.kind == Types.Array)
                 {
                     left.value._array ~= right;
                     this.context.updateRuntimeValue(lft.value.get!string, left);
@@ -1320,8 +1320,7 @@ private:
             .length; i++)
         {
             if (
-                funcDecl.args[i].type
-                .undefined)
+                funcDecl.args[i].type.kind == Types.Undefined)
             {
                 isVariadic = true;
                 break;
@@ -1347,7 +1346,7 @@ private:
         {
             RuntimeValue argValue = this.eval(callExpr.args[i]);
 
-            if (i < funcDecl.args.length && !funcDecl.args[i].type.undefined)
+            if (i < funcDecl.args.length && funcDecl.args[i].type.kind != Types.Undefined)
             {
                 if (!typeChecker.isComp(
                         funcDecl.args[i].type, argValue

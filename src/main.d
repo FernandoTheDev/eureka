@@ -117,9 +117,7 @@ void main(string[] args)
 				writeln("# New Context");
 				foreach (string id, RuntimeValue cnt; value)
 				{
-					writef("%s: %s = ", id, cnt.type.type == Types.Array ? cast(string) cnt.type.baseType ~ format(
-							"[%d]", cnt.type.dimensions) : cast(
-							string) cnt.type.baseType);
+					writef("%s: %s = ", id, cnt.type.toString());
 					if (cnt.type.baseType == BaseType.Int)
 						writeln(cnt.value._int);
 					if (cnt.type.baseType == BaseType.String)

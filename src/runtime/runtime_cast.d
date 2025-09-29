@@ -70,6 +70,8 @@ mixin template CastOperations()
             return MK_INT(cast(long) value.value._double);
         case BaseType.Float:
             return MK_INT(cast(long) value.value._float);
+        case BaseType.Int:
+            return value;
         case BaseType.Bool:
             return MK_INT(value.value._bool ? 1 : 0);
         default:

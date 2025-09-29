@@ -12,7 +12,7 @@ RuntimeValue print(RuntimeValue[LIMIT] values, size_t argCount)
     {
         RuntimeValue value = values[i];
 
-        if (value.type.type == Types.Array)
+        if (value.type.kind == Types.Array)
         {
             c_printf("Array<%s>[", cast(const char*) value.type.baseType);
             for (size_t j; j < value.value._array.length; j++)
@@ -185,9 +185,7 @@ RuntimeValue input(RuntimeValue[LIMIT] values, size_t argCount)
     printf("%s", values[0].value._string.toStringz());
     char[1024] buffer;
     if (!fgets(buffer.ptr, buffer.length, stdin))
-    {
         throw new Exception("Failed to read line");
-    }
 
     // Remove newline if present
     char* newlinePos = strchr(buffer.ptr, '\n');
@@ -195,16 +193,13 @@ RuntimeValue input(RuntimeValue[LIMIT] values, size_t argCount)
         *newlinePos = '\0';
 
     string result = cast(string) buffer[0 .. strlen(buffer.ptr)].dup;
-
     return MK_STRING(result);
 }
 
 RuntimeValue toString(RuntimeValue[LIMIT] values, size_t argCount)
 {
     if (argCount != 1)
-    {
         throw new Exception("toString requires exactly one argument");
-    }
 
     string result;
     RuntimeValue value = values[0];

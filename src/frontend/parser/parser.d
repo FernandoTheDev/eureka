@@ -71,7 +71,7 @@ private:
                 this.match([TokenKind.Comma]);
             }
             Loc end = this.consume(TokenKind.RBracket, "Expected ']' after array literal.").loc;
-            return new ArrayLiteral(values, Type(Types.Array, values.length > 0 ? values[0].type.baseType
+            return new ArrayLiteral(values, new Type(Types.Array, values.length > 0 ? values[0].type.baseType
                     : BaseType.Void), this.getLoc(token.loc, end));
 
         case TokenKind.Func:
@@ -291,12 +291,12 @@ private:
             else
             {
                 Node[] elseBody = this.parseBody(true);
-                Node elseStmt = new ElseStatement(elseBody, Type(Types.Undefined, BaseType.Void, true), elseLoc);
+                Node elseStmt = new ElseStatement(elseBody, new Type(Types.Undefined, BaseType.Void), elseLoc);
                 else_ = elseStmt;
             }
         }
 
-        return new IfStatement(condition, body, Type(Types.Undefined, BaseType.Void, true), else_, start);
+        return new IfStatement(condition, body, new Type(Types.Undefined, BaseType.Void), else_, start);
     }
 
     Extern parseExtern()
@@ -371,7 +371,7 @@ private:
         {
             if (this.match([TokenKind.Variadic]))
             {
-                args ~= FunctionArgument("...", Type(Types.Undefined, BaseType.Void, true), Variant(
+                args ~= FunctionArgument("...", new Type(Types.Undefined, BaseType.Void), Variant(
                         null), false);
                 break;
             }
@@ -403,53 +403,188 @@ private:
         return body_;
     }
 
+    // old system
+    // Type parseType()
+    // {
+    //     Token ty = this.advance();
+    //     bool isArray = this.match([TokenKind.LBracket]);
+    //     long dim;
+    //     if (isArray)
+    //     {
+    //         if (this.check(TokenKind.Number))
+    //             dim = to!long(this.advance().value.get!string);
+    //         this.consume(TokenKind.RBracket, "Expected ']' after array type.");
+    //     }
+
+    //     switch (ty.kind)
+    //     {
+    //     case TokenKind.Int:
+    //         if (isArray)
+    //             return new Type(Types.Array, BaseType.Int, false, to!ulong(dim));
+    //         return new Type(Types.Literal, BaseType.Int);
+    //     case TokenKind.Float:
+    //         if (isArray)
+    //             return new Type(Types.Array, BaseType.Float, false, to!ulong(dim));
+    //         return new Type(Types.Literal, BaseType.Float);
+    //     case TokenKind.Double:
+    //         if (isArray)
+    //             return new Type(Types.Array, BaseType.Double, false, to!ulong(dim));
+    //         return new Type(Types.Literal, BaseType.Double);
+    //     case TokenKind.Real:
+    //         if (isArray)
+    //             return new Type(Types.Array, BaseType.Real, false, to!ulong(dim));
+    //         return new Type(Types.Literal, BaseType.Real);
+    //     case TokenKind.Bool:
+    //         if (isArray)
+    //             return new Type(Types.Array, BaseType.Bool, false, to!ulong(dim));
+    //         return new Type(Types.Literal, BaseType.Bool);
+    //     case TokenKind.Str:
+    //         if (isArray)
+    //             return new Type(Types.Array, BaseType.String, false, to!ulong(dim));
+    //         return new Type(Types.Literal, BaseType.String);
+    //     case TokenKind.Void:
+    //         return new Type(Types.Void, BaseType.Void);
+    //     case TokenKind.Mixed:
+    //         this.error.addWarning(Diagnostic(
+    //                 "The 'mixed' type is unsafe, be careful when using it", ty.loc));
+    //         return new Type(Types.Array, BaseType.Mixed);
+    //     default:
+    //         return new Type(Types.Undefined, BaseType.Void);
+    //     }
+    // }
+
     Type parseType()
     {
-        Token ty = this.advance();
-        bool isArray = this.match([TokenKind.LBracket]);
-        long dim;
-        if (isArray)
+        TypeQualifier qualifiers = parseQualifiers();
+
+        uint pointerCount = 0;
+        while (match(TokenKind.Star))
+            pointerCount++;
+
+        Type baseType = parseBaseType();
+        baseType.qualifiers = qualifiers;
+        Type result = parseTypeSuffixes(baseType);
+
+        foreach (i; 0 .. pointerCount)
+            result = Type.pointer(result);
+
+        return result;
+    }
+
+    TypeQualifier parseQualifiers()
+    {
+        TypeQualifier quals = TypeQualifier.None;
+
+        while (true)
         {
-            if (this.check(TokenKind.Number))
-                dim = to!long(this.advance().value.get!string);
-            this.consume(TokenKind.RBracket, "Expected ']' after array type.");
+            switch (peek().kind)
+            {
+            case TokenKind.Const:
+                advance();
+                quals |= TypeQualifier.Const;
+                break;
+            case TokenKind.Mut:
+                advance();
+                quals |= TypeQualifier.Mutable;
+                break;
+            default:
+                return quals;
+            }
+        }
+    }
+
+    Type parseBaseType()
+    {
+        if (check(TokenKind.LParen))
+        {
+            return parseFunctionType();
         }
 
-        switch (ty.kind)
+        Token token = advance();
+
+        switch (token.kind)
         {
         case TokenKind.Int:
-            if (isArray)
-                return Type(Types.Array, BaseType.Int, false, to!ulong(dim));
-            return Type(Types.Literal, BaseType.Int);
+            return Type.basic(BaseType.Int);
         case TokenKind.Float:
-            if (isArray)
-                return Type(Types.Array, BaseType.Float, false, to!ulong(dim));
-            return Type(Types.Literal, BaseType.Float);
+            return Type.basic(BaseType.Float);
         case TokenKind.Double:
-            if (isArray)
-                return Type(Types.Array, BaseType.Double, false, to!ulong(dim));
-            return Type(Types.Literal, BaseType.Double);
+            return Type.basic(BaseType.Double);
         case TokenKind.Real:
-            if (isArray)
-                return Type(Types.Array, BaseType.Real, false, to!ulong(dim));
-            return Type(Types.Literal, BaseType.Real);
+            return Type.basic(BaseType.Real);
         case TokenKind.Bool:
-            if (isArray)
-                return Type(Types.Array, BaseType.Bool, false, to!ulong(dim));
-            return Type(Types.Literal, BaseType.Bool);
+            return Type.basic(BaseType.Bool);
         case TokenKind.Str:
-            if (isArray)
-                return Type(Types.Array, BaseType.String, false, to!ulong(dim));
-            return Type(Types.Literal, BaseType.String);
+            return Type.basic(BaseType.String);
         case TokenKind.Void:
-            return Type(Types.Void, BaseType.Void);
+            return Type.basic(BaseType.Void);
         case TokenKind.Mixed:
-            this.error.addWarning(Diagnostic(
-                    "The 'mixed' type is unsafe, be careful when using it", ty.loc));
-            return Type(Types.Array, BaseType.Mixed);
+            auto t = Type.basic(BaseType.Mixed);
+            t.isUnsafe = true;
+            return t;
+        case TokenKind.Identifier:
+            // Pode ser alias ou struct
+            auto t = new Type(Types.Alias);
+            t.name = token.value.get!string;
+            return t;
         default:
-            return Type(Types.Undefined, BaseType.Void);
+            throw new Exception("Unexpected token in type: " ~ to!string(token.kind));
         }
+    }
+
+    Type parseFunctionType()
+    {
+        consume(TokenKind.LParen, "Expected '('");
+        Type[] params;
+
+        if (!check(TokenKind.RParen))
+        {
+            do
+            {
+                if (match(TokenKind.Comma))
+                    continue;
+                params ~= parseType();
+            }
+            while (match(TokenKind.Comma));
+        }
+
+        consume(TokenKind.RParen, "Expected ')' after parameters");
+        consume(TokenKind.Arrow, "Expected '->' after function parameters");
+
+        Type returnType = parseType();
+        return Type.func(returnType, params);
+    }
+
+    Type parseTypeSuffixes(Type baseType)
+    {
+        Type current = baseType;
+
+        while (true)
+        {
+            if (match(TokenKind.LBracket))
+            {
+                if (match(TokenKind.Colon))
+                {
+                    consume(TokenKind.RBracket, "Expected ']' after ':'");
+                    current = Type.slice(current);
+                }
+                else if (check(TokenKind.Number))
+                {
+                    ulong size = to!ulong(advance().value.get!string);
+                    consume(TokenKind.RBracket, "Expected ']' after array size");
+                    current = Type.array(current, size);
+                }
+                else // array dinâmico []
+                {
+                    consume(TokenKind.RBracket, "Expected ']'");
+                    current = Type.array(current, 0);
+                }
+            }
+            else
+                break;
+        }
+
+        return current;
     }
 
     BinaryExpr parseBinaryExpr(Node left)
@@ -530,6 +665,11 @@ private:
         if (!this.isAtEnd())
             this.pos++;
         return this.previous();
+    }
+
+    bool match(TokenKind kind)
+    {
+        return match([kind]);
     }
 
     bool match(TokenKind[] kinds)

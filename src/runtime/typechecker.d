@@ -63,13 +63,13 @@ public:
         if (isNumericType(left) && isNumericType(right))
         {
             if (left.baseType == BaseType.Real || right.baseType == BaseType.Real)
-                return Type(Types.Literal, BaseType.Real);
+                return new Type(Types.Literal, BaseType.Real);
             if (left.baseType == BaseType.Float || right.baseType == BaseType.Float)
-                return Type(Types.Literal, BaseType.Float);
+                return new Type(Types.Literal, BaseType.Float);
             if (left.baseType == BaseType.Double || right.baseType == BaseType.Double)
-                return Type(Types.Literal, BaseType.Double);
-            return Type(Types.Literal, BaseType.Int);
+                return new Type(Types.Literal, BaseType.Double);
+            return new Type(Types.Literal, BaseType.Int);
         }
-        return Type(Types.Literal, BaseType.String, false);
+        return new Type(Types.Literal, BaseType.String);
     }
 }

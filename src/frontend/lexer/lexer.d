@@ -35,6 +35,8 @@ private:
         keywords["cast"] = TokenKind.Cast;
         keywords["mixed"] = TokenKind.Mixed;
         keywords["in"] = TokenKind.In;
+        keywords["const"] = TokenKind.Const;
+        keywords["mut"] = TokenKind.Mut;
 
         // types
         // numeric
@@ -74,6 +76,7 @@ private:
         symbols["."] = TokenKind.Dot;
         symbols["!"] = TokenKind.Bang;
         symbols["%"] = TokenKind.Modulo;
+        symbols["&"] = TokenKind.Ampersand;
 
         // 2
         symbols["||"] = TokenKind.Or;
@@ -82,6 +85,7 @@ private:
         symbols["++"] = TokenKind.PlusPlus;
         symbols["--"] = TokenKind.MinusMinus;
         symbols["+="] = TokenKind.PlusEquals;
+        symbols["->"] = TokenKind.Arrow;
 
         // 3
         symbols["..."] = TokenKind.Variadic;

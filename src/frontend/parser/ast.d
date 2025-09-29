@@ -52,7 +52,7 @@ class Program : Node
     this(Node[] body)
     {
         this.kind = NodeKind.Program;
-        this.type = Type(Types.Literal, BaseType.Int);
+        this.type = new Type(Types.Literal, BaseType.Int);
         this.value = null;
         this.body = body;
         this.loc = loc;
@@ -135,7 +135,7 @@ class Identifier : Node
     this(string id, Loc loc)
     {
         this.kind = NodeKind.Identifier;
-        this.type = Type(Types.Undefined, BaseType.Void);
+        this.type = new Type(Types.Undefined, BaseType.Void);
         this.value = id;
         this.loc = loc;
     }
@@ -203,7 +203,7 @@ class BoolLiteral : Node
     this(bool n, Loc loc)
     {
         this.kind = NodeKind.BoolLiteral;
-        this.type = Type(Types.Literal, BaseType.Bool);
+        this.type = new Type(Types.Literal, BaseType.Bool);
         this.value = n;
         this.loc = loc;
     }
@@ -223,7 +223,7 @@ class RealLiteral : Node
     this(real n, Loc loc)
     {
         this.kind = NodeKind.RealLiteral;
-        this.type = Type(Types.Literal, BaseType.Real);
+        this.type = new Type(Types.Literal, BaseType.Real);
         this.value = n;
         this.loc = loc;
     }
@@ -243,7 +243,7 @@ class DoubleLiteral : Node
     this(double n, Loc loc)
     {
         this.kind = NodeKind.DoubleLiteral;
-        this.type = Type(Types.Literal, BaseType.Double);
+        this.type = new Type(Types.Literal, BaseType.Double);
         this.value = n;
         this.loc = loc;
     }
@@ -263,7 +263,7 @@ class FloatLiteral : Node
     this(float n, Loc loc)
     {
         this.kind = NodeKind.FloatLiteral;
-        this.type = Type(Types.Literal, BaseType.Float);
+        this.type = new Type(Types.Literal, BaseType.Float);
         this.value = n;
         this.loc = loc;
     }
@@ -283,7 +283,7 @@ class IntLiteral : Node
     this(long n, Loc loc)
     {
         this.kind = NodeKind.IntLiteral;
-        this.type = Type(Types.Literal, BaseType.Int);
+        this.type = new Type(Types.Literal, BaseType.Int);
         this.value = n;
         this.loc = loc;
     }
@@ -303,7 +303,7 @@ class StringLiteral : Node
     this(string n, Loc loc)
     {
         this.kind = NodeKind.StringLiteral;
-        this.type = Type(Types.Literal, BaseType.String);
+        this.type = new Type(Types.Literal, BaseType.String);
         this.value = n;
         this.loc = loc;
     }
@@ -345,7 +345,7 @@ class CallExpr : Node
     this(string id, Node[] args, Loc loc)
     {
         this.kind = NodeKind.CallExpr;
-        this.type = Type(Types.Undefined, BaseType.Void);
+        this.type = new Type(Types.Undefined, BaseType.Void);
         this.value = null;
         this.id = id;
         this.loc = loc;
@@ -538,7 +538,7 @@ class UseStatement : Node
     this(string file, Loc loc, bool[string] symbols)
     {
         this.kind = NodeKind.UseStatement;
-        this.type = Type(Types.Void, BaseType.Void);
+        this.type = new Type(Types.Void, BaseType.Void);
         this.value = file;
         this.loc = loc;
         this.symbols = symbols;
@@ -568,7 +568,7 @@ class UnaryExpr : Node
         this.postFix = postFix;
         this.operand = operand;
         this.value = null;
-        this.type = Type(Types.Void, BaseType.Void);
+        this.type = new Type(Types.Void, BaseType.Void);
         this.loc = loc;
     }
 
@@ -633,7 +633,7 @@ class ForRangeStmt : Node
         Node step = null, bool hasIterator = true, Loc loc)
     {
         this.kind = NodeKind.ForRangeStmt;
-        this.type = Type(Types.Void, BaseType.Void);
+        this.type = new Type(Types.Void, BaseType.Void);
         this.value = null;
         this.iterator = iterator;
         this.start = start;
@@ -700,7 +700,7 @@ class ForStmt : Node
     this(Node init_, Node condition, Node increment, Node[] body, Loc loc)
     {
         this.kind = NodeKind.ForStmt;
-        this.type = Type(Types.Void, BaseType.Void);
+        this.type = new Type(Types.Void, BaseType.Void);
         this.value = null;
         this.init_ = init_;
         this.condition = condition;
@@ -761,7 +761,7 @@ class ForEachStmt : Node
     this(string iterator, Node iterable, Node[] body, Loc loc = Loc.init)
     {
         this.kind = NodeKind.ForEachStmt;
-        this.type = Type(Types.Void, BaseType.Void);
+        this.type = new Type(Types.Void, BaseType.Void);
         this.value = null;
         this.iterator = iterator;
         this.iterable = iterable;
