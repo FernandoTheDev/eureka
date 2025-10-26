@@ -1,0 +1,7 @@
+func void test(x int, y int) {
+    print("X: ", x)
+    print("Y: ", y)
+}
+
+print("hi")
+test(10, 9)

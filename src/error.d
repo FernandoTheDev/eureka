@@ -99,10 +99,10 @@ public:
             output ~= "\n";
             foreach (suggestion; suggestions)
             {
-                output ~= "Sugestão: " ~ suggestion.message ~ "\n";
+                output ~= "Suggestion: " ~ suggestion.message ~ "\n";
                 if (suggestion.replacement.length > 0)
                 {
-                    output ~= "Correção: " ~ suggestion.replacement ~ "\n";
+                    output ~= "Correction: " ~ suggestion.replacement ~ "\n";
                 }
             }
         }
@@ -174,13 +174,13 @@ public:
 
         if (errorCount == 0 && warningCount == 0)
         {
-            return "Nenhum problema encontrado!";
+            return "No problems found!";
         }
 
-        string errorText = errorCount == 1 ? "erro" : "erros";
-        string warningText = warningCount == 1 ? "aviso" : "avisos";
+        string errorText = errorCount == 1 ? "error" : "errors";
+        string warningText = warningCount == 1 ? "warning" : "warnings";
 
-        string summaryPrefix = "Encontrado: ";
+        string summaryPrefix = "Found: ";
         string[] parts;
 
         if (errorCount > 0)
@@ -193,7 +193,7 @@ public:
             parts ~= to!string(warningCount) ~ " " ~ warningText;
         }
 
-        return summaryPrefix ~ parts.join(" e ");
+        return summaryPrefix ~ parts.join(" and ");
     }
 
     string getLineText(ulong line, string file)

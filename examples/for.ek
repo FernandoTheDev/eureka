@@ -1,0 +1,36 @@
+//use "io.ek" : { println, eprintf, print }
+
+//println("for range 0..=10:")
+for i in 0 ..= 10 {
+//    print(i)
+}
+
+//eprintf("\n\nfor range 0..9:\n")
+for i in 0 .. 10 {
+//    print(i)
+}
+
+//eprintf("\n\nfor range in float:\n")
+for i in 0.0f ..= 1f : 0.1f {
+//    print(i, " ")
+}
+
+//eprintf("\n\nfor range in -float:\n")
+for i in 1.0f ..= 0.0f : -0.1f {
+//    print(i, " ")
+}
+
+//eprintf("\n\nfor range without iterator:\n")
+for 0 .. 10 {
+//    print("without i ")
+}
+
+//eprintf("\n\nfor cstyle:\n")
+for let i int = 0; i < 10; i++ {
+//    print(i, " ")
+}
+
+//eprintf("\nforeach in string:\n")
+for ch in "Fernando" {
+//    println(ch)
+}

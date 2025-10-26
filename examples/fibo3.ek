@@ -1,12 +1,10 @@
-extern func void eprintf(msg str, ...);
-
 func int fibo(n int, a int, b int) {
     if n == 0 return a
     if n == 1 return b
     return fibo(n - 1, b, a + b)
 }
 
-for 1..=10 {
-    fibo(100, 0, 1)
-}
 
+for let i int = 0; i < 90; i = i + 1 {
+    print(fibo(i, 0, 1), " | ")
+}

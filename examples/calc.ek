@@ -1,0 +1,21 @@
+func int do_something(x int) {
+     x + 1
+}
+
+func int sum(x int, y int) {
+     return x + do_something(y)
+}
+
+let result int = sum(60, 9) - 1
+let total int = 0
+for i in 0 ..= 10 {
+     total = total + i
+}
+
+print(result)
+print(total)
+print(result + total)
+
+if result > 0 {
+     print("Result > 0")
+}

@@ -1,0 +1,17 @@
+func void println(args mixed[]) {
+    for arg in args {
+        print(arg)
+    }
+    print("\n")
+}
+
+func int my_sum(x int, y int) {
+    return x + y
+}
+
+println(["Hello "])
+print("World!", 1, 2, 3)
+let message str = "Fernando " + "Dev"
+print(message)
+print("60 + 9 = ", my_sum(my_sum(30, 30), 9))
+print(true)

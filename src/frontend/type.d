@@ -173,7 +173,7 @@ public:
 
         case Types.Array:
             return elementType.isCompatibleWith(other.elementType) &&
-                (arraySize == 0 || other.arraySize == 0 || arraySize == other.arraySize);
+                ((arraySize == 0 && other.arraySize == 0) || arraySize == other.arraySize);
 
         case Types.Function:
             if (!returnType.isCompatibleWith(other.returnType))

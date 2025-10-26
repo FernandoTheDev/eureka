@@ -3,6 +3,7 @@ docs.json
 __dummy.html
 docs/
 /eureka
+/tests/*
 eureka
 eureka.so
 eureka.dylib

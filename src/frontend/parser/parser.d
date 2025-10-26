@@ -70,9 +70,11 @@ private:
                 values ~= this.parseExpression(Precedence.LOWEST);
                 this.match([TokenKind.Comma]);
             }
-            Loc end = this.consume(TokenKind.RBracket, "Expected ']' after array literal.").loc;
-            return new ArrayLiteral(values, new Type(Types.Array, values.length > 0 ? values[0].type.baseType
-                    : BaseType.Void), this.getLoc(token.loc, end));
+            Loc end = this.consume(TokenKind.RBracket, "Expected ']' after array literal.").loc; //
+            // return new ArrayLiteral(values, new Type(Types.Array, values.length > 0 ? values[0].type.baseType
+            //         : BaseType.Void), this.getLoc(token.loc, end));
+            return new ArrayLiteral(values, Type.array(values.length > 0 ? values[0].type
+                    : Type.basic(BaseType.Void), values.length), this.getLoc(token.loc, end));
 
         case TokenKind.Func:
             return this.parseFuncDecl();

@@ -2,10 +2,89 @@ import core.stdc.stdio : c_printf = printf, putchar, getchar, scanf, fgets, stdi
 import core.stdc.stdlib : atoi, atof;
 import std.string : toStringz;
 import std.conv : to;
+import std.format : format;
 import frontend.type, runtime.runtime_value, config : LIMIT;
 
 extern (C):
 
+// TODO: implementar isso
+// Códigos ANSI para cores
+enum Color : string
+{
+    Reset = "\033[0m",
+
+    // Cores de texto normais
+    Black = "\033[30m",
+    Red = "\033[31m",
+    Green = "\033[32m",
+    Yellow = "\033[33m",
+    Blue = "\033[34m",
+    Magenta = "\033[35m",
+    Cyan = "\033[36m",
+    White = "\033[37m",
+
+    // Cores de texto brilhantes
+    BrightBlack = "\033[90m",
+    BrightRed = "\033[91m",
+    BrightGreen = "\033[92m",
+    BrightYellow = "\033[93m",
+    BrightBlue = "\033[94m",
+    BrightMagenta = "\033[95m",
+    BrightCyan = "\033[96m",
+    BrightWhite = "\033[97m",
+
+    // Cores de fundo
+    BgBlack = "\033[40m",
+    BgRed = "\033[41m",
+    BgGreen = "\033[42m",
+    BgYellow = "\033[43m",
+    BgBlue = "\033[44m",
+    BgMagenta = "\033[45m",
+    BgCyan = "\033[46m",
+    BgWhite = "\033[47m",
+
+    // Cores de fundo brilhantes
+    BgBrightBlack = "\033[100m",
+    BgBrightRed = "\033[101m",
+    BgBrightGreen = "\033[102m",
+    BgBrightYellow = "\033[103m",
+    BgBrightBlue = "\033[104m",
+    BgBrightMagenta = "\033[105m",
+    BgBrightCyan = "\033[106m",
+    BgBrightWhite = "\033[107m",
+
+    // Estilos
+    Bold = "\033[1m",
+    Dim = "\033[2m",
+    Italic = "\033[3m",
+    Underline = "\033[4m",
+    Blink = "\033[5m",
+    Reverse = "\033[7m",
+    Hidden = "\033[8m",
+    Strikethrough = "\033[9m"
+}
+
+// string colorize(string text, Color color)
+// {
+//     return format("%s%s%s", color, text, Color.Reset);
+// }
+
+string colorize(string text, Color color)
+{
+    return format("%s%s%s", color, text, Color.Reset);
+}
+
+string rgb(ubyte r, ubyte g, ubyte b)
+{
+    return format("\033[38;2;%d;%d;%dm", r, g, b);
+}
+
+string bgRgb(ubyte r, ubyte g, ubyte b)
+{
+    return format("\033[48;2;%d;%d;%dm", r, g, b);
+}
+
+// reescrita do print
 RuntimeValue print(RuntimeValue[LIMIT] values, size_t argCount)
 {
     for (size_t i; i < argCount; i++)
@@ -25,6 +104,7 @@ RuntimeValue print(RuntimeValue[LIMIT] values, size_t argCount)
                     c_printf(", ");
             }
             c_printf("]");
+            continue;
         }
 
         if (value.type.baseType == BaseType.Bool)

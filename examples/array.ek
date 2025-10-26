@@ -1,0 +1,18 @@
+let names str[] = ["Fernando" "Tyler Laceby" "TheDevConnor"] // safe
+let ages int[] = [17, 99, 69] // safe
+let unsafes mixed[] = ["Fernando", 1, 2.1421f] // unsafe array
+
+print("----- AGE -----")
+for age in ages {
+    print(age)
+}
+
+print("----- NAME -----")
+for name in names {
+    print(name)
+}
+
+print("----- UNSAFE -----")
+for unsafe in unsafes {
+    print(unsafe)
+}

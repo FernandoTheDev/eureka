@@ -1,9 +1,10 @@
 module main;
 
-import std.stdio, std.path, std.getopt, std.format, std.file : exists;
+import std.stdio, std.path, std.getopt, std.format, std.datetime.stopwatch, std.file : exists;
 import frontend.lexer.token, frontend.lexer.lexer, frontend.parser.ast, frontend
 	.parser.parser, frontend.type;
-import runtime.context, runtime.runtime_value, runtime.runtime;
+import middle.semantic_analyzer;
+import backend.codegen, backend.eureka_engine;
 import repl, config, cli, error;
 
 string extractDir(string path)
@@ -65,7 +66,8 @@ void main(string[] args)
 
 	if (repl)
 	{
-		replMode();
+		// replMode();
+		writeln("TODO...");
 		return;
 	}
 
@@ -82,6 +84,7 @@ void main(string[] args)
 	try
 	{
 		string source = getFileSource(file);
+		auto totalSw = StopWatch(AutoStart.yes);
 		Lexer lexer = new Lexer(file, source, extractDir(file), error);
 		Token[] tokens = lexer.tokenize();
 
@@ -99,39 +102,27 @@ void main(string[] args)
 		if (checkErrors(error))
 			return;
 
-		Context context = new Context();
-		EurekaRuntime eureka = new EurekaRuntime(context, dlopnso, error);
-		eureka.eval(prog);
+		SemanticAnalyzer anal = new SemanticAnalyzer(error);
+		anal.analyze(prog);
+
+		EurekaEngine engine = new EurekaEngine;
+		CodeGen cg = new CodeGen(engine, error);
+		auto vmSw = StopWatch(AutoStart.yes);
+		Instruction[] code = cg.generate(prog);
 
 		if (checkErrors(error))
 			return;
 
-		if (stat)
-			eureka.printCacheStats();
-
 		if (ctxst_)
+			writeln(code);
+
+		engine.code = code;
+		engine.run();
+
+		if (stat)
 		{
-			writeln("----- Context State -----");
-			foreach (long i, RuntimeValue[string] value; context.contexts)
-			{
-				writeln("# New Context");
-				foreach (string id, RuntimeValue cnt; value)
-				{
-					writef("%s: %s = ", id, cnt.type.toString());
-					if (cnt.type.baseType == BaseType.Int)
-						writeln(cnt.value._int);
-					if (cnt.type.baseType == BaseType.String)
-						writeln(cnt.value._string);
-					if (cnt.type.baseType == BaseType.Float)
-						writefln("%.6f", cnt.value._float);
-					if (cnt.type.baseType == BaseType.Double)
-						writefln("%.20f", cnt.value._double);
-					if (cnt.type.baseType == BaseType.Real)
-						writefln("%.20f", cnt.value._real);
-					if (cnt.type.baseType == BaseType.Bool)
-						writeln(cnt.value._bool ? "true" : "false");
-				}
-			}
+			writefln("Total time from vm: %d µs", vmSw.peek().total!"usecs");
+			writefln("Total time: %d µs", totalSw.peek().total!"usecs");
 		}
 	}
 	catch (Exception e)
@@ -139,6 +130,6 @@ void main(string[] args)
 		if (checkErrors(error))
 			return;
 		else
-			writeln("ERRO: ", e);
+			writeln("ERROR: ", e);
 	}
 }
